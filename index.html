@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIMEX Helrit_bot Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container fullscreen">
+        <header>
+            <div class="brand">
+                <h1>MIMEX <span class="sub-brand">Helrit_bot</span></h1>
+                <span class="version">v2.0 Ultimate</span>
+            </div>
+
+            <!-- Mode Indicator -->
+            <div id="mode-indicator" class="mode-indicator">MODE: INITIALIZING</div>
+
+            <div class="header-controls">
+                <div class="mode-switch-container">
+                    <span class="mode-label">Follow Leader</span>
+                    <label class="switch">
+                        <input type="checkbox" id="mode-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="mode-label">Web Control</span>
+                </div>
+                <div class="menu-icon">☰</div>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- Left Panel: Sensor Array (Potentiometers) -->
+            <div class="left-section card full-height">
+                <h2 class="panel-title">Sensor Array</h2>
+                <!-- WebSocket Connection Panel -->
+                <div class="connection-panel"
+                    style="margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                    <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+                        <input type="text" id="ws-url" value="ws://192.168.29.123/ws" placeholder="ws://IP/ws"
+                            class="compact-input"
+                            style="flex: 2; font-size: 0.8rem; background: rgba(0,0,0,0.5); border: 1px solid var(--neon-blue); color: white; padding: 4px;">
+                        <button id="ws-connect-btn" class="btn-action compact-btn"
+                            style="flex: 1; font-size: 0.8rem; padding: 4px;">🔌 Connect</button>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6);">Leader Status:</span>
+                        <span id="ws-status"
+                            style="font-size: 0.75rem; color: var(--neon-red); font-weight: bold;">DISCONNECTED</span>
+                    </div>
+                </div>
+
+
+                <!-- Follower ESP32 Connection Panel -->
+                <div class="connection-panel"
+                    style="margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                    <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+                        <input type="text" id="follower-ws-url" value="ws://192.168.29.100:81" placeholder="ws://IP:81"
+                            placeholder="Follower IP (ws://...)" class="compact-input"
+                            style="flex: 2; font-size: 0.8rem; background: rgba(0,0,0,0.5); border: 1px solid var(--neon-green); color: white; padding: 4px;">
+                        <button id="follower-connect-btn" class="btn-action compact-btn"
+                            style="flex: 1; font-size: 0.8rem; padding: 4px; border-color: var(--neon-green); color: var(--neon-green);">📡
+                            Link</button>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6);">Follower Status:</span>
+                        <span id="follower-status"
+                            style="font-size: 0.75rem; color: var(--neon-red); font-weight: bold;">OFFLINE</span>
+                    </div>
+                </div>
+
+                <div class="sensor-grid">
+                    <!-- 5 Potentiometer Modules -->
+                    <div class="sensor-module">
+                        <label>J1</label>
+                        <span class="limit-lbl">0</span>
+                        <div class="bar-container">
+                            <div class="bar-fill" id="bar-1"></div>
+                        </div>
+                        <span class="limit-lbl">180</span>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                            <div class="digital-val" id="val-1">90</div>
+                            <span class="deviation" id="err-1">--</span>
+                        </div>
+                    </div>
+                    <div class="sensor-module">
+                        <label>J2</label>
+                        <span class="limit-lbl">0</span>
+                        <div class="bar-container">
+                            <div class="bar-fill" id="bar-2"></div>
+                        </div>
+                        <span class="limit-lbl">180</span>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                            <div class="digital-val" id="val-2">90</div>
+                            <span class="deviation" id="err-2">--</span>
+                        </div>
+                    </div>
+                    <div class="sensor-module">
+                        <label>J3</label>
+                        <span class="limit-lbl">0</span>
+                        <div class="bar-container">
+                            <div class="bar-fill" id="bar-3"></div>
+                        </div>
+                        <span class="limit-lbl">180</span>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                            <div class="digital-val" id="val-3">90</div>
+                            <span class="deviation" id="err-3">--</span>
+                        </div>
+                    </div>
+                    <div class="sensor-module">
+                        <label>J4</label>
+                        <span class="limit-lbl">0</span>
+                        <div class="bar-container">
+                            <div class="bar-fill" id="bar-4"></div>
+                        </div>
+                        <span class="limit-lbl">180</span>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                            <div class="digital-val" id="val-4">90</div>
+                            <span class="deviation" id="err-4">--</span>
+                        </div>
+                    </div>
+                    <div class="sensor-module">
+                        <label>J5</label>
+                        <span class="limit-lbl">0</span>
+                        <div class="bar-container">
+                            <div class="bar-fill" id="bar-5"></div>
+                        </div>
+                        <span class="limit-lbl">180</span>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                            <div class="digital-val" id="val-5">90</div>
+                            <span class="deviation" id="err-5">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- End-Effector Kinematics -->
+                <div class="kinematics-panel"
+                    style="margin-top: 15px; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+
+                    <!-- Position Readout -->
+                    <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-bottom: 5px;">End-Effector
+                        Position</div>
+                    <div
+                        style="display: flex; justify-content: space-between; font-family: monospace; font-size: 1.1rem; margin-bottom: 15px;">
+                        <div>X: <span id="pos-x" style="color: var(--neon-blue);">0.00</span> m</div>
+                        <div>Y: <span id="pos-y" style="color: var(--neon-green);">0.00</span> m</div>
+                        <div>Z: <span id="pos-z" style="color: var(--neon-blue);">0.00</span> m</div>
+                    </div>
+
+                    <!-- Velocity & Smoothness -->
+                    <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                        <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-bottom: 5px;">Motion Metrics
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-family: monospace; font-size: 0.9rem;">
+                                Max Vel: <span id="max-vel" style="color: var(--neon-blue);">0</span>°/s
+                            </div>
+                            <div id="motion-warning" class="hidden"
+                                style="color: var(--neon-red); font-size: 0.8rem; font-weight: bold; animation: blink 1s infinite;">
+                                ⚠ JERKY MOTION
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-area">
+
+
+                    <div class="action-buttons-stack">
+                        <!-- Execution Mode Selector -->
+                        <div
+                            style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--neon-blue); border-radius: 8px; padding: 10px; margin-bottom: 10px;">
+                            <h3
+                                style="font-size: 0.9rem; color: var(--neon-blue); margin-top: 0; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">
+                                Execution Mode</h3>
+                            <div style="display: flex; gap: 5px;">
+                                <button id="mode-classical" class="btn-action compact-btn"
+                                    style="flex: 1; border-color: var(--neon-blue); color: var(--neon-blue); font-weight: bold;">Classical</button>
+                                <button id="mode-policy" class="btn-action compact-btn"
+                                    style="flex: 1; border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.5);">Learned
+                                    Policy</button>
+                            </div>
+                            <div id="policy-active-msg"
+                                style="margin-top: 8px; font-size: 0.75rem; color: var(--neon-green); display: none; text-align: center;">
+                                <span style="animation: blink 1s infinite;">●</span> Policy controlling robot actions
+                            </div>
+                        </div>
+
+                        <button id="home-btn" class="btn-action big-btn"
+                            style="margin-bottom: 10px; border-color: #bc13fe; color: #bc13fe;">GO TO
+                            HOME</button>
+                        <button id="record-btn" class="btn-danger big-btn">RECORD SEQUENCE</button>
+
+                        <!-- Dropdown Panel -->
+                        <div id="record-dropdown" class="record-panel hidden">
+                            <div class="panel-content">
+                                <h3>Session Metadata</h3>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                    <input type="text" id="meta-task" placeholder="Task Name (e.g. pick_and_place)"
+                                        class="compact-input">
+                                    <input type="text" id="meta-env" placeholder="Environment (e.g. tabletop)"
+                                        class="compact-input">
+                                </div>
+                                <input type="text" id="meta-notes" placeholder="Notes (e.g. slow demo)"
+                                    class="compact-input" style="margin-top: 5px;">
+
+                                <h3 style="margin-top: 10px;">Add Waypoint</h3>
+                                <div class="session-info">Points: <span id="point-counter"
+                                        class="highlight-text">0</span></div>
+                                <input type="text" id="waypoint-name" placeholder="Waypoint Name" class="compact-input">
+
+                                <!-- Motion Controls -->
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px;">
+                                    <div>
+                                        <label style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Motion</label>
+                                        <select id="wp-motion" class="compact-input"
+                                            style="background: rgba(0,0,0,0.5);">
+                                            <option value="MoveJ">MoveJ (Joint)</option>
+                                            <option value="MoveL">MoveL (Linear)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Speed: <span
+                                                id="wp-speed-val">60</span>%</label>
+                                        <input type="range" id="wp-speed" min="10" max="100" value="60"
+                                            class="neon-slider" style="height: 4px;">
+                                    </div>
+                                </div>
+
+                                <div class="panel-actions">
+                                    <button id="add-point-btn" class="btn-action btn-add compact-btn">Add Point</button>
+                                    <button id="undo-point-btn" class="btn-action btn-danger compact-btn"
+                                        style="margin-left: 5px;">Undo Last</button>
+                                </div>
+
+                                <div style="margin-top: 10px;">
+                                    <h3 style="color: rgba(255,255,255,0.7); font-size: 0.8rem; margin-bottom: 5px;">
+                                        Recorded Points</h3>
+                                    <div id="recorded-points-log"
+                                        style="height: 100px; overflow-y: auto; background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.1); padding: 5px; font-family: monospace; font-size: 0.85rem; color: var(--neon-blue);">
+                                        <!-- Points will appear here -->
+                                        <div style="color: grey; font-style: italic;">No points recorded yet.</div>
+                                    </div>
+                                </div>
+
+                                <!-- Export Section -->
+                                <div
+                                    style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                                    <h3 style="color: rgba(255,255,255,0.7); font-size: 0.8rem; margin-bottom: 5px;">
+                                        Export Demonstration</h3>
+                                    <div
+                                        style="font-size: 0.7rem; color: rgba(255,255,255,0.5); font-style: italic; margin-bottom: 8px;">
+                                        ℹ Exported files can be directly used for imitation learning (behavior cloning).
+                                    </div>
+                                    <div style="display: flex; gap: 10px;">
+                                        <button id="export-csv-btn" class="btn-action compact-btn"
+                                            style="flex: 1; border: 1px solid var(--neon-blue); color: var(--neon-blue); background: transparent;">CSV</button>
+                                        <button id="export-json-btn" class="btn-action compact-btn"
+                                            style="flex: 1; border: 1px solid var(--neon-green); color: var(--neon-green); background: transparent;">JSON</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button id="playback-btn" class="btn-action big-btn"
+                            style="margin-top: 10px; border-color: #ff9e00; color: #ff9e00;">PLAYBACK</button>
+
+                        <!-- Cancel Playback Button (Hidden by default) -->
+                        <button id="cancel-playback-btn" class="btn-danger big-btn hidden" style="margin-top: 5px;">STOP
+                            PLAYBACK</button>
+
+                        <button id="reset-obj-btn" class="btn-action big-btn"
+                            style="margin-top: 10px; border-color: var(--neon-blue); color: var(--neon-blue);">RESET
+                            OBJECT</button>
+
+
+
+                        <!-- Neural Policy Panel (Hidden by default) -->
+                        <div id="neural-policy-panel" class="record-panel hidden"
+                            style="border-color: var(--neon-green); margin-top: 10px;">
+                            <div class="panel-content">
+                                <h3 style="color: var(--neon-green); margin-bottom: 5px;">Neural Policy Control</h3>
+
+                                <!-- Part 1: Behaviour Cloning -->
+                                <h4 style="color: white; font-size: 0.9rem; margin-top: 10px; margin-bottom: 5px;">1.
+                                    Behaviour Cloning</h4>
+                                <p style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-bottom: 10px;">
+                                    Train a neural network to imitate your recorded demonstrations.
+                                </p>
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                                    <button id="train-policy-btn" class="btn-action compact-btn"
+                                        style="border-color: var(--neon-green); color: var(--neon-green);">TRAIN
+                                        POLICY</button>
+                                    <span id="train-status"
+                                        style="font-size: 0.8rem; color: rgba(255,255,255,0.5); font-style: italic;">No
+                                        model trained</span>
+                                </div>
+
+                                <!-- Part 2: Policy Execution -->
+                                <h4 style="color: white; font-size: 0.9rem; margin-top: 10px; margin-bottom: 5px;">2.
+                                    Policy Execution</h4>
+
+                                <!-- Model Loader -->
+                                <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                                    <input type="file" id="policy-model-input" accept=".json,.onnx"
+                                        style="display: none;">
+                                    <button onclick="document.getElementById('policy-model-input').click()"
+                                        class="btn-action compact-btn" style="flex: 1; font-size: 0.75rem;">LOAD
+                                        MODEL</button>
+                                </div>
+                                <button id="start-policy-btn" class="btn-action big-btn"
+                                    style="margin-bottom: 10px; border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.5);">START
+                                    POLICY (AI)</button>
+
+                                <div
+                                    style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                        <span style="font-size: 0.8rem; color: rgba(255,255,255,0.7);">Status:</span>
+                                        <span id="policy-status-ind"
+                                            style="font-size: 0.8rem; font-weight: bold; color: rgba(255,255,255,0.5);">IDLE</span>
+                                    </div>
+                                    <div
+                                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 0.75rem; color: rgba(255,255,255,0.6);">
+                                        <div>Model:</div>
+                                        <div id="policy-model-name" style="text-align: right; color: white;">-</div>
+                                        <div>Input:</div>
+                                        <div id="policy-input-val" style="text-align: right; color: white;">Joint State
+                                        </div>
+                                        <div>Output:</div>
+                                        <div id="policy-output-val" style="text-align: right; color: white;">Joint
+                                            Command</div>
+                                        <div>Confidence:</div>
+                                        <div id="policy-conf" style="text-align: right; color: white;">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Playback Dropdown -->
+                        <div id="playback-dropdown" class="record-panel hidden"
+                            style="border-color: var(--neon-green);">
+                            <div class="panel-content">
+                                <h3 style="color: var(--neon-green); margin-bottom: 5px;">Playback Source</h3>
+
+
+
+
+
+                                <!-- Cycle Control -->
+                                <div style="margin-bottom: 10px;">
+                                    <div
+                                        style="display: flex; justify-content: space-between; font-size: 0.8rem; color: rgba(255,255,255,0.7); margin-bottom: 5px;">
+                                        <span style="align-self: center;">Cycles</span>
+                                        <input type="number" id="playback-cycles" value="1" min="1" max="99"
+                                            style="width: 50px; background: rgba(0,0,0,0.5); border: 1px solid var(--neon-green); color: white; padding: 2px 5px; border-radius: 4px; text-align: center; font-size: 1rem;">
+                                    </div>
+                                </div>
+
+                                <div class="panel-actions"
+                                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                                    <button id="play-last-choice-btn" class="btn-action btn-add compact-btn"
+                                        style="background: var(--neon-green); color: black;">PLAY LAST</button>
+                                    <button id="open-file-choice-btn" class="btn-action btn-finish compact-btn"
+                                        style="border-color: var(--neon-green); color: var(--neon-green);">OPEN
+                                        FILE</button>
+                                </div>
+
+                                <div class="panel-actions"
+                                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                                    <button id="btn-step" class="btn-action compact-btn"
+                                        style="border-color: var(--neon-blue); color: var(--neon-blue);">STEP ⏭</button>
+                                    <button id="btn-explain" class="btn-action compact-btn"
+                                        style="border-color: var(--neon-orange); color: var(--neon-orange);">EXPLAIN
+                                        🧠</button>
+                                </div>
+
+                                <div class="log-container" style="margin-bottom: 5px;">
+                                    <div
+                                        style="text-align: center; color: rgba(255,255,255,0.3); font-size: 0.7rem; margin-bottom: 2px;">
+                                        (Program)</div>
+                                    <div id="program-log"
+                                        style="height: 80px; overflow-y: auto; background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.1); padding: 5px; font-family: monospace; font-size: 0.75rem; color: rgba(255,255,255,0.9);">
+                                        <!-- Dynamic Content -->
+                                    </div>
+                                </div>
+
+                                <div class="log-container">
+                                    <div id="system-log"
+                                        style="height: 60px; overflow-y: auto; background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.1); padding: 5px; font-family: monospace; font-size: 0.75rem; color: var(--neon-blue);">
+                                        [SYSTEM] Ready.<br>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Playback Status Display (Moved to bottom) -->
+                        <div id="playback-status" class="hidden"
+                            style="margin-top: 10px; margin-bottom: 10px; font-size: 0.9rem; background: rgba(0,0,0,0.6); padding: 8px; border-radius: 6px; border: 1px solid var(--neon-green);">
+                            <div style="color: var(--neon-green); font-weight: bold; margin-bottom: 4px;">EXECUTING:
+                                <span id="pb-wp" style="color: white;">--</span>
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; font-size: 0.8rem; color: rgba(255,255,255,0.8);">
+                                <div>Motion: <span id="pb-motion" style="color: var(--neon-blue);">--</span></div>
+                                <div>Speed: <span id="pb-speed" style="color: var(--neon-blue);">--</span>%</div>
+                                <div>Cycle: <span id="pb-cycle" style="color: var(--neon-orange);">--</span></div>
+                            </div>
+                            <!-- Live Speed Control -->
+                            <div
+                                style="margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">
+                                <div
+                                    style="display: flex; justify-content: space-between; font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-bottom: 2px;">
+                                    <span>Playback Speed</span>
+                                    <span id="speed-val" style="color: var(--neon-green);">1.0×</span>
+                                </div>
+                                <input type="range" id="speed-slider" min="0.5" max="2.0" step="0.5" value="1.0"
+                                    class="neon-slider" style="height: 4px;">
+                                <div class="scale-markers" style="margin-top:1px; font-size: 0.6rem;">
+                                    <span>0.5×</span><span>1.0×</span><span>1.5×</span><span>2.0×</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="file" id="file-input" accept=".csv" style="display: none;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Visualization & Control -->
+            <div class="right-section card full-height">
+                <div class="viz-wrapper">
+                    <div class="viz-container large-viz">
+                        <!-- Kinetic Arm Visualizer -->
+                        <div class="arm-visual-mockup"
+                            style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+                            <p style="position: absolute; top: 10px; left: 20px; color: var(--neon-blue);">MIMEX Kinetic
+                                Visualizer</p>
+
+                            <svg viewBox="0 0 500 500" class="arm-svg" id="kinetic-arm"
+                                style="width: 100%; height: 100%; filter: drop-shadow(0 0 8px var(--neon-blue));">
+                                <defs>
+                                    <linearGradient id="link-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style="stop-color: #000; stop-opacity: 1" />
+                                        <stop offset="50%" style="stop-color: #1a1a1a; stop-opacity: 1" />
+                                        <stop offset="100%" style="stop-color: #000; stop-opacity: 1" />
+                                    </linearGradient>
+                                </defs>
+
+                                <!-- Base Pedestal (Static) -->
+                                <g transform="translate(250, 420)">
+                                    <path d="M-40,0 L40,0 L30,-20 L-30,-20 Z" fill="var(--neon-blue)" opacity="0.5" />
+                                    <rect x="-30" y="-50" width="60" height="30" fill="#222" stroke="var(--neon-blue)"
+                                        stroke-width="2" />
+
+                                    <!-- Base Rotation Group (Pseudo-3D) -->
+                                    <g id="viz-base-rot" transform="translate(0, -50)">
+                                        <!-- Joint 1 (Shoulder) -->
+                                        <g id="viz-j1"> <!-- Pivot Point -->
+                                            <circle r="15" fill="#111" stroke="var(--neon-green)" stroke-width="2" />
+
+                                            <!-- Link 1 -->
+                                            <g id="link-1">
+                                                <rect x="-10" y="-120" width="20" height="120" rx="5"
+                                                    fill="url(#link-grad)" stroke="var(--neon-blue)" stroke-width="1" />
+
+                                                <!-- Joint 2 (Elbow) -->
+                                                <g id="viz-j2" transform="translate(0, -120)">
+                                                    <!-- Pivot at ends of Link 1 -->
+                                                    <circle r="12" fill="#111" stroke="var(--neon-green)"
+                                                        stroke-width="2" />
+
+                                                    <!-- Link 2 -->
+                                                    <g id="link-2">
+                                                        <rect x="-8" y="-100" width="16" height="100" rx="5"
+                                                            fill="url(#link-grad)" stroke="var(--neon-blue)"
+                                                            stroke-width="1" />
+
+                                                        <!-- Joint 3 (Wrist Pitch) -->
+                                                        <g id="viz-j3" transform="translate(0, -100)">
+                                                            <circle r="10" fill="#111" stroke="var(--neon-green)"
+                                                                stroke-width="2" />
+
+                                                            <!-- Link 3 -->
+                                                            <g id="link-3">
+                                                                <rect x="-6" y="-60" width="12" height="60" rx="4"
+                                                                    fill="url(#link-grad)" stroke="var(--neon-blue)"
+                                                                    stroke-width="1" />
+
+                                                                <!-- Joint 4 (Wrist Roll/Tip) -->
+                                                                <g id="viz-j4" transform="translate(0, -60)">
+                                                                    <circle r="8" fill="#111" stroke="var(--neon-green)"
+                                                                        stroke-width="2" />
+
+                                                                    <!-- Link 4 (Hand) -->
+                                                                    <g id="link-4">
+                                                                        <rect x="-15" y="-30" width="30" height="30"
+                                                                            rx="5" fill="none" stroke="var(--neon-blue)"
+                                                                            stroke-width="2" />
+
+                                                                        <!-- Joint 5 (Gripper) -->
+                                                                        <!-- J5 will control the opening of the fingers -->
+                                                                        <g id="viz-j5">
+                                                                            <!-- Left Finger -->
+                                                                            <path id="claw-left" d="M-10,-5 L-15,-25"
+                                                                                stroke="var(--neon-green)"
+                                                                                stroke-width="3"
+                                                                                stroke-linecap="round" />
+                                                                            <!-- Right Finger -->
+                                                                            <path id="claw-right" d="M10,-5 L15,-25"
+                                                                                stroke="var(--neon-green)"
+                                                                                stroke-width="3"
+                                                                                stroke-linecap="round" />
+                                                                        </g>
+                                                                    </g>
+                                                                </g>
+                                                            </g>
+                                                        </g>
+                                                    </g>
+                                                </g>
+                                            </g>
+                                        </g>
+                                    </g>
+                                </g>
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-wrapper">
+                    <h3>Manual Override (Use Sliders or Keyboard)</h3>
+                    <div class="slider-control-panel">
+                        <div class="slider-row">
+                            <label>J1</label>
+                            <div class="slider-input-wrapper">
+                                <input type="range" min="0" max="180" value="90" id="slider-1" class="neon-slider">
+                                <div class="scale-markers">
+                                    <span>0</span><span>45</span><span>90</span><span>135</span><span>180</span>
+                                </div>
+                            </div>
+                            <span class="slider-val" id="disp-1">90°</span>
+                        </div>
+                        <div class="slider-row">
+                            <label>J2</label>
+                            <div class="slider-input-wrapper">
+                                <input type="range" min="0" max="180" value="90" id="slider-2" class="neon-slider">
+                                <div class="scale-markers">
+                                    <span>0</span><span>45</span><span>90</span><span>135</span><span>180</span>
+                                </div>
+                            </div>
+                            <span class="slider-val" id="disp-2">90°</span>
+                        </div>
+                        <div class="slider-row">
+                            <label>J3</label>
+                            <div class="slider-input-wrapper">
+                                <input type="range" min="0" max="180" value="90" id="slider-3" class="neon-slider">
+                                <div class="scale-markers">
+                                    <span>0</span><span>45</span><span>90</span><span>135</span><span>180</span>
+                                </div>
+                            </div>
+                            <span class="slider-val" id="disp-3">90°</span>
+                        </div>
+                        <div class="slider-row">
+                            <label>J4</label>
+                            <div class="slider-input-wrapper">
+                                <input type="range" min="0" max="180" value="90" id="slider-4" class="neon-slider">
+                                <div class="scale-markers">
+                                    <span>0</span><span>45</span><span>90</span><span>135</span><span>180</span>
+                                </div>
+                            </div>
+                            <span class="slider-val" id="disp-4">90°</span>
+                        </div>
+                        <div class="slider-row">
+                            <label>J5</label>
+                            <div class="slider-input-wrapper">
+                                <input type="range" min="0" max="180" value="90" id="slider-5" class="neon-slider">
+                                <div class="scale-markers">
+                                    <span>0</span><span>45</span><span>90</span><span>135</span><span>180</span>
+                                </div>
+                            </div>
+                            <span class="slider-val" id="disp-5">90°</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3D Visualization Section -->
+        <div class="card full-width" style="margin-top: 20px; height: 600px; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2 class="panel-title" style="margin: 0; border: none;">3D Live Preview</h2>
+                <div style="display: flex; gap: 10px;">
+                    <button id="view-settings-btn" class="btn-action compact-btn"
+                        style="padding: 2px 8px; font-size: 0.8rem; border-color: var(--neon-orange); color: var(--neon-orange);">⚙
+                        View</button>
+                    <button id="fullscreen-btn" class="btn-action compact-btn"
+                        style="padding: 2px 8px; font-size: 0.8rem;">⛶ Fullscreen</button>
+                </div>
+            </div>
+
+            <div id="three-container"
+                style="flex: 1; position: relative; width: 100%; overflow: hidden; border-radius: 8px;">
+                <!-- Control HUD (Side Options) -->
+                <div id="control-hud"
+                    style="position: absolute; top: 10px; left: 10px; z-index: 10; display: flex; flex-direction: column; gap: 10px;">
+
+                    <!-- Arm Presets -->
+                    <div
+                        style="background: rgba(0,0,0,0.8); border: 1px solid var(--neon-blue); padding: 10px; border-radius: 8px; width: 140px;">
+                        <h4 style="color: var(--neon-blue); margin: 0 0 5px 0; font-size: 0.8rem;">ARM CONTROL</h4>
+                        <button id="hud-home-btn" class="btn-action compact-btn"
+                            style="width: 100%; margin-bottom: 5px; font-size: 0.75rem;">🏠 HOME</button>
+                        <button id="hud-center-btn" class="btn-action compact-btn"
+                            style="width: 100%; margin-bottom: 5px; font-size: 0.75rem; border-color: var(--neon-purple); color: var(--neon-purple);">🎯
+                            CENTER</button>
+                        <button id="hud-corner-btn" class="btn-action compact-btn"
+                            style="width: 100%; margin-bottom: 5px; font-size: 0.75rem; border-color: var(--neon-purple); color: var(--neon-purple);">📐
+                            CORNER</button>
+                        <button id="hud-mid-btn" class="btn-action compact-btn"
+                            style="width: 100%; font-size: 0.75rem; border-color: var(--neon-purple); color: var(--neon-purple);">➗
+                            MID-EDGE</button>
+                    </div>
+
+                    <!-- Object Controls -->
+                    <div
+                        style="background: rgba(0,0,0,0.8); border: 1px solid var(--neon-orange); padding: 10px; border-radius: 8px; width: 140px;">
+                        <h4 style="color: var(--neon-orange); margin: 0 0 5px 0; font-size: 0.8rem;">OBJECT (BLOCK)</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; margin-bottom: 5px;">
+                            <div></div>
+                            <button id="obj-up" class="btn-action compact-btn" style="padding: 2px;">▲</button>
+                            <div></div>
+                            <button id="obj-left" class="btn-action compact-btn" style="padding: 2px;">◄</button>
+                            <button id="obj-reset" class="btn-action compact-btn"
+                                style="padding: 2px; font-size: 0.6rem;">R</button>
+                            <button id="obj-right" class="btn-action compact-btn" style="padding: 2px;">►</button>
+                            <div></div>
+                            <button id="obj-down" class="btn-action compact-btn" style="padding: 2px;">▼</button>
+                            <div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Robot Base Controls -->
+                <div
+                    style="background: rgba(0,0,0,0.8); border: 1px solid var(--neon-green); padding: 10px; border-radius: 8px; width: 140px; position: absolute; bottom: 10px; right: 10px; z-index: 10;">
+                    <h4 style="color: var(--neon-green); margin: 0 0 5px 0; font-size: 0.8rem;">ROBOT BASE</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; margin-bottom: 5px;">
+                        <div></div>
+                        <button id="base-up" class="btn-action compact-btn" style="padding: 2px;">▲</button>
+                        <div></div>
+                        <button id="base-left" class="btn-action compact-btn" style="padding: 2px;">◄</button>
+                        <button id="base-reset" class="btn-action compact-btn"
+                            style="padding: 2px; font-size: 0.6rem;">R</button>
+                        <button id="base-right" class="btn-action compact-btn" style="padding: 2px;">►</button>
+                        <div></div>
+                        <button id="base-down" class="btn-action compact-btn" style="padding: 2px;">▼</button>
+                        <div></div>
+                    </div>
+                </div>
+
+                <!-- View Settings Panel (Hidden) -->
+                <div id="view-settings-panel" class="hidden"
+                    style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.9); border: 1px solid var(--neon-orange); padding: 15px; border-radius: 8px; z-index: 20; min-width: 150px;">
+                    <h4
+                        style="color: var(--neon-orange); margin-top: 0; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 5px;">
+                        Scene Options</h4>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-floor" checked> Realistic Floor
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-table" checked> Work Table
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-obstacles"> Industrial Scene (Standard)
+                        </label>
+
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-shadows" checked> Soft Shadows
+                        </label>
+                        <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); width: 100%; margin: 5px 0;">
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-grid"> Debug Grid
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-axes"> World Axes
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-vla-helper" checked> VLA Cam View
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-target" checked> Target Block
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-zone"> Safety Zone
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-conveyor"> Conveyor Belt
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-lights" checked> Ceiling Lights
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-human"> Human Scale
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-factory"> Factory Walls
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-fog"> Atmosphere (Fog)
+                        </label>
+
+                        <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); width: 100%; margin: 5px 0;">
+
+                        <!-- New Options -->
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-cage"> Safety Cage
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-estop"> E-Stop Station
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-laptop"> Control Laptop
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-pipes"> Industrial Pipes
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-drum"> Oil Drum
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-extinguisher"> Fire Extinguisher
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-monitor"> Overhead Monitor
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-sign"> Warning Sign
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-vent"> Ventilation Duct
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" id="toggle-scifi"> Sci-Fi Skybox
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Coordinate Overlay -->
+                <div id="coord-overlay"
+                    style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.8); border: 1px solid var(--neon-blue); border-radius: 8px; padding: 10px; font-family: 'Orbitron', monospace; pointer-events: none; z-index: 10;">
+                    <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7); margin-bottom: 5px;">TCP Coordinates
+                    </div>
+                    <div style="font-family: monospace; font-size: 1.1rem; line-height: 1.4;">
+                        <div style="color: white;">X: <span id="tcp-x" style="color: var(--neon-blue);">0.00</span> m
+                        </div>
+                        <div style="color: white;">Y: <span id="tcp-y" style="color: var(--neon-green);">0.00</span> m
+                        </div>
+                        <div style="color: white;">Z: <span id="tcp-z" style="color: var(--neon-blue);">0.00</span> m
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fullscreen Status Overlay -->
+                <div id="fullscreen-overlay">
+                    <div class="fs-label">Current Mode</div>
+                    <div class="fs-value" id="fs-mode-val">MANUAL</div>
+
+                    <div class="fs-label">Instruction / Status</div>
+                    <div class="fs-value" id="fs-status-val" style="color: var(--neon-green); font-size: 1rem;">System
+                        Ready
+                    </div>
+                </div>
+
+                <!-- Fullscreen Controls Hint -->
+                <div id="controls-hint">
+                    <div class="hint-item">
+                        <div class="mouse-icon left"></div> ROTATE
+                    </div>
+                    <div class="hint-item">
+                        <div class="mouse-icon right"></div> PAN
+                    </div>
+                    <div class="hint-item">
+                        <div class="mouse-icon scroll"></div> ZOOM
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trajectory Timeline Section -->
+        <div class="card full-width" style="margin-top: 20px; height: 350px;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 10px;">
+                <h2 class="panel-title" style="border: none; margin: 0; padding: 0; width: auto;">Trajectory Timeline
+                </h2>
+                <div class="chart-controls">
+                    <label for="joint-select" style="color: var(--neon-blue); margin-right: 10px;">Select View:</label>
+                    <select id="joint-select" class="compact-input" style="width: 120px;">
+                        <option value="-1" selected>All Combined</option>
+                        <option value="0">J1 (Base)</option>
+                        <option value="1">J2 (Shoulder)</option>
+                        <option value="2">J3 (Elbow)</option>
+                        <option value="3">J4 (Wrist)</option>
+                        <option value="4">J5 (Gripper)</option>
+                    </select>
+                </div>
+            </div>
+            <div style="flex: 1; position: relative; width: 100%; height: 100%;">
+                <canvas id="trajectory-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- Neural Policy Control Section -->
+
+
+        <!-- About Section -->
+        <div class="card full-width" style="margin-top: 20px; text-align: center;">
+            <h2 class="panel-title" style="color: var(--neon-blue); margin-bottom: 10px;">About MIMEX</h2>
+            <p style="color: rgba(255,255,255,0.7); line-height: 1.6; max-width: 800px; margin: 0 auto;">
+                <strong>MIMEX</strong> is a web-enabled leader–follower robotic arm designed for intuitive robot
+                teaching and demonstration-based learning.
+                A human operator guides a sensor-equipped leader arm, while the follower arm replicates the motion in
+                real time using servo actuators.
+                <br><br>
+                The system supports live teleoperation, motion recording, and playback through an interactive web
+                interface with kinematic and 3D visualization.
+                Recorded demonstrations are converted into structured datasets for imitation learning, enabling future
+                autonomous manipulation.
+            </p>
+        </div>
+
+        <footer>
+            <div class="dev-credit">Developed by Rittu</div>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
