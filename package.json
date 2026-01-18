@@ -1,0 +1,25 @@
+{
+  "name": "mimex-helrit-bot-portal",
+  "version": "2.5.0",
+  "description": "Professional Robotic Arm Control Software",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "author": "Developer",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.mimex.helritbot",
+    "productName": "MIMEX Helrit_bot",
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    }
+  }
+}

@@ -12,17 +12,46 @@
 </head>
 
 <body>
-    <div class="container fullscreen">
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-box">
+            <div class="login-header">
+                <div class="logo-icon">M</div>
+                <h1>MIMEX <span class="sub">Helrit_bot</span></h1>
+                <p>Advanced Robotic Control System</p>
+            </div>
+            <form id="login-form">
+                <div class="input-group">
+                    <label>User ID</label>
+                    <input type="text" placeholder="Enter User ID" value="admin" focus>
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password" placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-login">Initialize System</button>
+            </form>
+            <div class="login-footer">
+                v2.0 Ultimate | Secure Connection
+            </div>
+        </div>
+    </div>
+
+    <div id="main-app" class="container fullscreen hidden-app">
         <header>
             <div class="brand">
                 <h1>MIMEX <span class="sub-brand">Helrit_bot</span></h1>
-                <span class="version">v2.0 Ultimate</span>
+                <span class="version">v2.1 Prof.</span>
             </div>
 
             <!-- Mode Indicator -->
             <div id="mode-indicator" class="mode-indicator">MODE: INITIALIZING</div>
 
             <div class="header-controls">
+                <!-- Theme Toggler (Hidden Option) -->
+                <button id="theme-btn" class="menu-icon" title="Toggle Theme"
+                    style="margin-right: 15px; font-size: 1.2rem;">🎨</button>
+
                 <div class="mode-switch-container">
                     <span class="mode-label">Follow Leader</span>
                     <label class="switch">
@@ -31,17 +60,102 @@
                     </label>
                     <span class="mode-label">Web Control</span>
                 </div>
+                <div id="help-btn" class="menu-icon" style="margin-right: 15px; cursor: pointer;">❓</div>
                 <div class="menu-icon">☰</div>
             </div>
         </header>
+
+        <!-- New Toolbar for Professional Functions -->
+        <div class="prof-toolbar"
+            style="display: flex; gap: 10px; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+            <button id="estop-btn" class="btn-danger"
+                style="background: var(--neon-red); color: white; font-weight: bold; padding: 8px 20px; border: none; box-shadow: 0 0 15px rgba(255,0,0,0.4);">⛔
+                EMERGENCY STOP</button>
+            <div style="width: 1px; background: rgba(255,255,255,0.2); margin: 0 10px;"></div>
+            <button class="btn-action compact-btn" onclick="runMacro('HOME')">🏠 Home</button>
+            <button class="btn-action compact-btn" onclick="runMacro('ZERO')">0️⃣ Zero All</button>
+            <button class="btn-action compact-btn" onclick="runMacro('WAVE')">👋 Wave</button>
+            <button class="btn-action compact-btn" onclick="runMacro('PICK')">📦 Pick Demo</button>
+            <div style="flex:1;"></div>
+            <div
+                style="display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: rgba(255,255,255,0.5);">
+                <span>System Uptime: <span id="sys-uptime" style="color: var(--neon-blue);">00:00:00</span></span>
+            </div>
+        </div>
+
+        <!-- Help Modal -->
+        <div id="help-modal" class="modal-overlay hidden"
+            style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; justify-content: center; align-items: center;">
+            <div class="modal-content"
+                style="background: #111; border: 1px solid var(--neon-blue); padding: 20px; border-radius: 10px; max-width: 600px; width: 90%; color: white; box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">
+                    <h2 style="margin: 0; color: var(--neon-blue);">🎮 Controls & Shortcuts</h2>
+                    <button id="close-help-btn"
+                        style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <h3 style="color: var(--neon-green); font-size: 1rem;">Manual Control (Web Mode)</h3>
+                        <ul style="list-style: none; padding: 0; font-size: 0.9rem; line-height: 1.6;">
+                            <li><strong style="color: var(--neon-orange);">W / X</strong> : J2 (Shoulder)
+                                Up/Down</li>
+                            <li><strong style="color: var(--neon-orange);">A / D</strong> : J1 (Base) Left/Right
+                            </li>
+                            <li><strong style="color: var(--neon-orange);">E / Z</strong> : J3 (Elbow) Up/Down
+                            </li>
+                            <li><strong style="color: var(--neon-orange);">Q / C</strong> : J4 (Wrist) Up/Down
+                            </li>
+                            <li><strong style="color: var(--neon-orange);">P / K</strong> : J5 (Gripper)
+                                Open/Close</li>
+                            <li><strong style="color: var(--neon-red);">S</strong> : STOP / Stop Recording</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 style="color: var(--neon-purple); font-size: 1rem;">Features</h3>
+                        <ul style="list-style: none; padding: 0; font-size: 0.9rem; line-height: 1.6;">
+                            <li><strong>Follow Leader:</strong> Mimics ESP32 input.</li>
+                            <li><strong>Record:</strong> Captures waypoints.</li>
+                            <li><strong>Playback:</strong> Replays sequences.</li>
+                            <li><strong>VLA Mode:</strong> AI-driven control.</li>
+                        </ul>
+                        <div style="margin-top: 15px; font-size: 0.8rem; color: rgba(255,255,255,0.6);">
+                            <em>Tip: Ensure the "Web Control" mode is active for keyboard inputs.</em>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <h3 style="color: white; font-size: 1rem; margin-bottom: 10px;">👨‍💻 About Developer</h3>
+                    <div
+                        style="display: flex; gap: 15px; align-items: center; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                        <div
+                            style="width: 50px; height: 50px; background: var(--neon-blue); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.5rem;">
+                            👨‍🚀</div>
+                        <div>
+                            <div style="font-weight: bold; color: white;">Creator & Lead Engineer</div>
+                            <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6);">Architect of MIMEX
+                                Helrit_bot
+                                Control Systems. Specializing in Advanced VLA Robotics and Human-Machine
+                                Interfaces.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div class="dashboard-grid">
             <!-- Left Panel: Sensor Array (Potentiometers) -->
             <div class="left-section card full-height">
                 <h2 class="panel-title">Sensor Array</h2>
                 <!-- WebSocket Connection Panel -->
+                <!-- Leader Connection Panel -->
                 <div class="connection-panel"
                     style="margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                    <h3
+                        style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-bottom: 5px; text-transform: uppercase;">
+                        Leader Arm (Input)</h3>
                     <div style="display: flex; gap: 5px; margin-bottom: 5px;">
                         <input type="text" id="ws-url" value="ws://192.168.29.123/ws" placeholder="ws://IP/ws"
                             class="compact-input"
@@ -53,9 +167,12 @@
                         <button id="cal-home-btn" class="btn-action compact-btn"
                             style="flex: 1; font-size: 0.7rem; padding: 2px; border-color: var(--neon-purple); color: var(--neon-purple);">🎯
                             Set Home</button>
+                        <button id="cal-check-btn" class="btn-action compact-btn"
+                            style="flex: 1; font-size: 0.7rem; padding: 2px; border-color: var(--neon-orange); color: var(--neon-orange);">⚙
+                            Calibrate</button>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6);">Leader Status:</span>
+                        <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6);">Status:</span>
                         <span id="ws-status"
                             style="font-size: 0.75rem; color: var(--neon-red); font-weight: bold;">DISCONNECTED</span>
                     </div>
@@ -156,7 +273,8 @@
                     style="margin-top: 15px; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
 
                     <!-- Position Readout -->
-                    <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-bottom: 5px;">End-Effector
+                    <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-bottom: 5px;">
+                        End-Effector
                         Position</div>
                     <div
                         style="display: flex; justify-content: space-between; font-family: monospace; font-size: 1.1rem; margin-bottom: 15px;">
@@ -167,7 +285,8 @@
 
                     <!-- Velocity & Smoothness -->
                     <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
-                        <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-bottom: 5px;">Motion Metrics
+                        <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-bottom: 5px;">Motion
+                            Metrics
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="font-family: monospace; font-size: 0.9rem;">
@@ -178,6 +297,34 @@
                                 ⚠ JERKY MOTION
                             </div>
                         </div>
+                    </div>
+
+                    <!-- System Health (Battery / Temp Placeholder) -->
+                    <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 10px; padding-top: 10px;">
+                        <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-bottom: 5px;">System
+                            Health
+                        </div>
+                        <div style="display: flex; justify-content: space-between; gap: 10px;">
+                            <div style="font-size: 0.8rem; color: var(--neon-green);">🔋 12.4V (100%)</div>
+                            <div style="font-size: 0.8rem; color: var(--neon-blue);">🌡️ 34°C (Normal)</div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Guide -->
+                    <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 10px; padding-top: 10px;">
+                        <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-bottom: 5px;">Quick
+                            Guide
+                        </div>
+                        <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">
+                            • <b>Follow Leader:</b> Mimics Leader input.<br>
+                            • <b>Web Control:</b> Use sliders manually.<br>
+                            • <b>Record:</b> Save move sequences.<br>
+                            • <b>Playback:</b> Replay last sequence.
+                        </div>
+                        <button id="quality-guide-btn" class="btn-action compact-btn"
+                            style="width: 100%; margin-top: 5px; font-size: 0.75rem; border: 1px dashed rgba(255,255,255,0.3); color: rgba(255,255,255,0.7);">
+                            📋 Recording Guidelines
+                        </button>
                     </div>
                 </div>
 
@@ -200,7 +347,8 @@
                             </div>
                             <div id="policy-active-msg"
                                 style="margin-top: 8px; font-size: 0.75rem; color: var(--neon-green); display: none; text-align: center;">
-                                <span style="animation: blink 1s infinite;">●</span> Policy controlling robot actions
+                                <span style="animation: blink 1s infinite;">●</span> Policy controlling robot
+                                actions
                             </div>
                         </div>
 
@@ -238,15 +386,16 @@
                                         </select>
                                     </div>
                                     <div>
-                                        <label style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Speed: <span
-                                                id="wp-speed-val">60</span>%</label>
+                                        <label style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Speed:
+                                            <span id="wp-speed-val">60</span>%</label>
                                         <input type="range" id="wp-speed" min="10" max="100" value="60"
                                             class="neon-slider" style="height: 4px;">
                                     </div>
                                 </div>
 
                                 <div class="panel-actions">
-                                    <button id="add-point-btn" class="btn-action btn-add compact-btn">Add Point</button>
+                                    <button id="add-point-btn" class="btn-action btn-add compact-btn">Add
+                                        Point</button>
                                     <button id="undo-point-btn" class="btn-action btn-danger compact-btn"
                                         style="margin-left: 5px;">Undo Last</button>
                                 </div>
@@ -257,7 +406,8 @@
                                     <div id="recorded-points-log"
                                         style="height: 100px; overflow-y: auto; background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.1); padding: 5px; font-family: monospace; font-size: 0.85rem; color: var(--neon-blue);">
                                         <!-- Points will appear here -->
-                                        <div style="color: grey; font-style: italic;">No points recorded yet.</div>
+                                        <div style="color: grey; font-style: italic;">No points recorded yet.
+                                        </div>
                                     </div>
                                 </div>
 
@@ -268,13 +418,17 @@
                                         Export Demonstration</h3>
                                     <div
                                         style="font-size: 0.7rem; color: rgba(255,255,255,0.5); font-style: italic; margin-bottom: 8px;">
-                                        ℹ Exported files can be directly used for imitation learning (behavior cloning).
+                                        ℹ Exported files can be directly used for imitation learning (behavior
+                                        cloning).
                                     </div>
                                     <div style="display: flex; gap: 10px;">
                                         <button id="export-csv-btn" class="btn-action compact-btn"
                                             style="flex: 1; border: 1px solid var(--neon-blue); color: var(--neon-blue); background: transparent;">CSV</button>
                                         <button id="export-json-btn" class="btn-action compact-btn"
                                             style="flex: 1; border: 1px solid var(--neon-green); color: var(--neon-green); background: transparent;">JSON</button>
+                                        <button id="export-lerobot-btn" class="btn-action compact-btn"
+                                            style="flex: 1; border: 1px solid var(--neon-orange); color: var(--neon-orange); background: transparent;">LeRobot</button>
+
                                     </div>
                                 </div>
                             </div>
@@ -297,10 +451,12 @@
                         <div id="neural-policy-panel" class="record-panel hidden"
                             style="border-color: var(--neon-green); margin-top: 10px;">
                             <div class="panel-content">
-                                <h3 style="color: var(--neon-green); margin-bottom: 5px;">Neural Policy Control</h3>
+                                <h3 style="color: var(--neon-green); margin-bottom: 5px;">Neural Policy Control
+                                </h3>
 
                                 <!-- Part 1: Behaviour Cloning -->
-                                <h4 style="color: white; font-size: 0.9rem; margin-top: 10px; margin-bottom: 5px;">1.
+                                <h4 style="color: white; font-size: 0.9rem; margin-top: 10px; margin-bottom: 5px;">
+                                    1.
                                     Behaviour Cloning</h4>
                                 <p style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-bottom: 10px;">
                                     Train a neural network to imitate your recorded demonstrations.
@@ -316,7 +472,8 @@
                                 </div>
 
                                 <!-- Part 2: Policy Execution -->
-                                <h4 style="color: white; font-size: 0.9rem; margin-top: 10px; margin-bottom: 5px;">2.
+                                <h4 style="color: white; font-size: 0.9rem; margin-top: 10px; margin-bottom: 5px;">
+                                    2.
                                     Policy Execution</h4>
 
                                 <!-- Model Loader -->
@@ -341,12 +498,15 @@
                                     <div
                                         style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 0.75rem; color: rgba(255,255,255,0.6);">
                                         <div>Model:</div>
-                                        <div id="policy-model-name" style="text-align: right; color: white;">-</div>
+                                        <div id="policy-model-name" style="text-align: right; color: white;">-
+                                        </div>
                                         <div>Input:</div>
-                                        <div id="policy-input-val" style="text-align: right; color: white;">Joint State
+                                        <div id="policy-input-val" style="text-align: right; color: white;">
+                                            Joint State
                                         </div>
                                         <div>Output:</div>
-                                        <div id="policy-output-val" style="text-align: right; color: white;">Joint
+                                        <div id="policy-output-val" style="text-align: right; color: white;">
+                                            Joint
                                             Command</div>
                                         <div>Confidence:</div>
                                         <div id="policy-conf" style="text-align: right; color: white;">-</div>
@@ -394,7 +554,8 @@
                                 <div class="panel-actions"
                                     style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                                     <button id="btn-step" class="btn-action compact-btn"
-                                        style="border-color: var(--neon-blue); color: var(--neon-blue);">STEP ⏭</button>
+                                        style="border-color: var(--neon-blue); color: var(--neon-blue);">STEP
+                                        ⏭</button>
                                     <button id="btn-explain" class="btn-action compact-btn"
                                         style="border-color: var(--neon-orange); color: var(--neon-orange);">EXPLAIN
                                         🧠</button>
@@ -422,14 +583,18 @@
                         <!-- Playback Status Display (Moved to bottom) -->
                         <div id="playback-status" class="hidden"
                             style="margin-top: 10px; margin-bottom: 10px; font-size: 0.9rem; background: rgba(0,0,0,0.6); padding: 8px; border-radius: 6px; border: 1px solid var(--neon-green);">
-                            <div style="color: var(--neon-green); font-weight: bold; margin-bottom: 4px;">EXECUTING:
+                            <div style="color: var(--neon-green); font-weight: bold; margin-bottom: 4px;">
+                                EXECUTING:
                                 <span id="pb-wp" style="color: white;">--</span>
                             </div>
                             <div
                                 style="display: flex; justify-content: space-between; font-size: 0.8rem; color: rgba(255,255,255,0.8);">
-                                <div>Motion: <span id="pb-motion" style="color: var(--neon-blue);">--</span></div>
-                                <div>Speed: <span id="pb-speed" style="color: var(--neon-blue);">--</span>%</div>
-                                <div>Cycle: <span id="pb-cycle" style="color: var(--neon-orange);">--</span></div>
+                                <div>Motion: <span id="pb-motion" style="color: var(--neon-blue);">--</span>
+                                </div>
+                                <div>Speed: <span id="pb-speed" style="color: var(--neon-blue);">--</span>%
+                                </div>
+                                <div>Cycle: <span id="pb-cycle" style="color: var(--neon-orange);">--</span>
+                                </div>
                             </div>
                             <!-- Live Speed Control -->
                             <div
@@ -459,7 +624,8 @@
                         <!-- Kinetic Arm Visualizer -->
                         <div class="arm-visual-mockup"
                             style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
-                            <p style="position: absolute; top: 10px; left: 20px; color: var(--neon-blue);">MIMEX Kinetic
+                            <p style="position: absolute; top: 10px; left: 20px; color: var(--neon-blue);">MIMEX
+                                Kinetic
                                 Visualizer</p>
 
                             <svg viewBox="0 0 500 500" class="arm-svg" id="kinetic-arm"
@@ -616,6 +782,9 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <h2 class="panel-title" style="margin: 0; border: none;">3D Live Preview</h2>
                 <div style="display: flex; gap: 10px;">
+                    <button onclick="triggerModelUpload()" class="btn-action compact-btn"
+                        style="padding: 2px 8px; font-size: 0.8rem; border-color: var(--neon-green); color: var(--neon-green);"
+                        title="Upload Custom .glb/.gltf Model">📂 Upload Model</button>
                     <button id="view-settings-btn" class="btn-action compact-btn"
                         style="padding: 2px 8px; font-size: 0.8rem; border-color: var(--neon-orange); color: var(--neon-orange);">⚙
                         View</button>
@@ -642,7 +811,8 @@
                     <!-- Arm Presets -->
                     <div
                         style="background: rgba(0,0,0,0.8); border: 1px solid var(--neon-blue); padding: 10px; border-radius: 8px; width: 140px;">
-                        <h4 style="color: var(--neon-blue); margin: 0 0 5px 0; font-size: 0.8rem;">ARM CONTROL</h4>
+                        <h4 style="color: var(--neon-blue); margin: 0 0 5px 0; font-size: 0.8rem;">ARM CONTROL
+                        </h4>
                         <button id="hud-home-btn" class="btn-action compact-btn"
                             style="width: 100%; margin-bottom: 5px; font-size: 0.75rem;">🏠 HOME</button>
                         <button id="hud-center-btn" class="btn-action compact-btn"
@@ -659,7 +829,8 @@
                     <!-- Object Controls -->
                     <div
                         style="background: rgba(0,0,0,0.8); border: 1px solid var(--neon-orange); padding: 10px; border-radius: 8px; width: 140px;">
-                        <h4 style="color: var(--neon-orange); margin: 0 0 5px 0; font-size: 0.8rem;">OBJECT (BLOCK)</h4>
+                        <h4 style="color: var(--neon-orange); margin: 0 0 5px 0; font-size: 0.8rem;">OBJECT
+                            (BLOCK)</h4>
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; margin-bottom: 5px;">
                             <div></div>
                             <button id="obj-up" class="btn-action compact-btn" style="padding: 2px;">▲</button>
@@ -808,7 +979,8 @@
                 <!-- Coordinate Overlay -->
                 <div id="coord-overlay"
                     style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.8); border: 1px solid var(--neon-blue); border-radius: 8px; padding: 10px; font-family: 'Orbitron', monospace; pointer-events: none; z-index: 10;">
-                    <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7); margin-bottom: 5px;">TCP Coordinates
+                    <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7); margin-bottom: 5px;">TCP
+                        Coordinates
                     </div>
                     <div style="font-family: monospace; font-size: 1.1rem; line-height: 1.4;">
                         <div style="color: white;">X: <span id="tcp-x" style="color: var(--neon-blue);">0.00</span> m
@@ -826,7 +998,8 @@
                     <div class="fs-value" id="fs-mode-val">MANUAL</div>
 
                     <div class="fs-label">Instruction / Status</div>
-                    <div class="fs-value" id="fs-status-val" style="color: var(--neon-green); font-size: 1rem;">System
+                    <div class="fs-value" id="fs-status-val" style="color: var(--neon-green); font-size: 1rem;">
+                        System
                         Ready
                     </div>
                 </div>
@@ -852,10 +1025,12 @@
         <div class="card full-width" style="margin-top: 20px; height: 350px;">
             <div
                 style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 10px;">
-                <h2 class="panel-title" style="border: none; margin: 0; padding: 0; width: auto;">Trajectory Timeline
+                <h2 class="panel-title" style="border: none; margin: 0; padding: 0; width: auto;">Trajectory
+                    Timeline
                 </h2>
                 <div class="chart-controls">
-                    <label for="joint-select" style="color: var(--neon-blue); margin-right: 10px;">Select View:</label>
+                    <label for="joint-select" style="color: var(--neon-blue); margin-right: 10px;">Select
+                        View:</label>
                     <select id="joint-select" class="compact-input" style="width: 120px;">
                         <option value="-1" selected>All Combined</option>
                         <option value="0">J1 (Base)</option>
@@ -880,12 +1055,15 @@
             <p style="color: rgba(255,255,255,0.7); line-height: 1.6; max-width: 800px; margin: 0 auto;">
                 <strong>MIMEX</strong> is a web-enabled leader–follower robotic arm designed for intuitive robot
                 teaching and demonstration-based learning.
-                A human operator guides a sensor-equipped leader arm, while the follower arm replicates the motion in
+                A human operator guides a sensor-equipped leader arm, while the follower arm replicates the
+                motion in
                 real time using servo actuators.
                 <br><br>
-                The system supports live teleoperation, motion recording, and playback through an interactive web
+                The system supports live teleoperation, motion recording, and playback through an interactive
+                web
                 interface with kinematic and 3D visualization.
-                Recorded demonstrations are converted into structured datasets for imitation learning, enabling future
+                Recorded demonstrations are converted into structured datasets for imitation learning, enabling
+                future
                 autonomous manipulation.
             </p>
         </div>

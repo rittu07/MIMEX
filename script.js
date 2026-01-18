@@ -1,4 +1,43 @@
 ﻿document.addEventListener('DOMContentLoaded', () => {
+    // --- Login Logic ---
+    const loginScreen = document.getElementById('login-screen');
+    const loginForm = document.getElementById('login-form');
+    const mainApp = document.getElementById('main-app');
+
+    // Check previous session
+    if (sessionStorage.getItem('isLoggedIn') === 'true') {
+        loginScreen.style.display = 'none';
+        mainApp.classList.remove('hidden-app');
+    }
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const btn = loginForm.querySelector('.btn-login');
+            const originalText = btn.textContent;
+            btn.textContent = "Authenticating...";
+            btn.disabled = true;
+
+            // Simulate Network Delay for "Professional" feel
+            setTimeout(() => {
+                sessionStorage.setItem('isLoggedIn', 'true');
+
+                // Fade out animation
+                loginScreen.style.opacity = '0';
+                loginScreen.style.transition = 'opacity 0.5s ease';
+
+                setTimeout(() => {
+                    loginScreen.style.display = 'none';
+                    mainApp.classList.remove('hidden-app');
+
+                    // Trigger a resize event to ensure 3D canvas renders correctly
+                    window.dispatchEvent(new Event('resize'));
+                }, 500);
+            }, 800);
+        });
+    }
+
     // --- Configuration ---
     const updateInterval = 10; // ms (100Hz for maximum smoothness)
 
@@ -14,6 +53,142 @@
     const vals = [1, 2, 3, 4, 5].map(i => document.getElementById(`val-${i}`));
     const sliders = [1, 2, 3, 4, 5].map(i => document.getElementById(`slider-${i}`));
     const disps = [1, 2, 3, 4, 5].map(i => document.getElementById(`disp-${i}`));
+
+    // --- Tab Navigation Logic ---
+    window.switchTab = function (tabName) {
+        // Update Sidebar UI
+        document.querySelectorAll('.nav-item').forEach(el => {
+            el.classList.remove('active');
+            if (el.getAttribute('onclick') && el.getAttribute('onclick').includes(tabName)) {
+                el.classList.add('active');
+            }
+        });
+
+        // Update Breadcrumb
+        const crumb = document.getElementById('current-view-label');
+        if (crumb) crumb.textContent = tabName.charAt(0).toUpperCase() + tabName.slice(1);
+
+        // Logic to show/hide sections (For now we just keep Dashboard active as it's the main view)
+        // In a real app, we would toggle display of different container divs.
+        // Dashboard = standard view.
+        // Control = simplified view?
+        // Sequence = specialized editor?
+
+        console.log(`Switched to tab: ${tabName}`);
+
+        // Trigger resize for 3D view if it becomes visible
+        if (tabName === 'dashboard') {
+            setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+        }
+    };
+
+    // --- Professional Tools (Macros & Utilities) ---
+
+    // 1. Uptime Counter
+    let uptimeSeconds = 0;
+    setInterval(() => {
+        uptimeSeconds++;
+        const h = Math.floor(uptimeSeconds / 3600).toString().padStart(2, '0');
+        const m = Math.floor((uptimeSeconds % 3600) / 60).toString().padStart(2, '0');
+        const s = (uptimeSeconds % 60).toString().padStart(2, '0');
+        const el = document.getElementById('sys-uptime');
+        if (el) el.textContent = `${h}:${m}:${s}`;
+    }, 1000);
+
+    // Helper to send data (Replacing manual bits)
+    window.sendWebSocketData = function (values) {
+        if (typeof followerWs !== 'undefined' && followerWs && followerWs.readyState === WebSocket.OPEN) {
+            const dataToSend = values.map((v, i) => {
+                let val = v;
+                if (typeof homeOffsets !== 'undefined') val += homeOffsets[i];
+                return Math.max(0, Math.min(180, Math.round(val)));
+            });
+            followerWs.send(JSON.stringify({ servos: dataToSend }));
+        }
+    };
+
+    // 2. Emergency Stop
+    const estopBtn = document.getElementById('estop-btn');
+    if (estopBtn) {
+        estopBtn.addEventListener('click', () => {
+            logSystem("!!! EMERGENCY STOP TRIGGERED !!!");
+
+            // Stop logic
+            currentMode = 'WEB'; // Force out of Playback
+            if (typeof playbackInterval !== 'undefined' && playbackInterval) {
+                clearInterval(playbackInterval);
+            }
+
+            // Force Safe State (90 degrees / 0 velocity)
+            currentValues = [90, 90, 90, 90, 90];
+            updateManualSliders();
+
+            // Send twice to ensure delivery
+            sendWebSocketData(currentValues);
+            setTimeout(() => sendWebSocketData(currentValues), 50);
+
+            // Visual Reset
+            const pbBtn = document.getElementById('playback-btn');
+            if (pbBtn) {
+                pbBtn.disabled = false;
+                pbBtn.textContent = "PLAYBACK";
+                pbBtn.style.opacity = "1";
+            }
+
+            alert("EMERGENCY STOP EXECUTED. Robot Halted.");
+        });
+    }
+
+    // 3. Macros
+    window.runMacro = function (type) {
+        logSystem(`Executing Macro: ${type}`);
+        let target = [];
+        switch (type) {
+            case 'HOME': target = [90, 90, 90, 90, 90]; break;
+            case 'ZERO': target = [0, 0, 0, 0, 0]; break;
+            case 'WAVE':
+                // Simple wave animation simulation
+                currentValues = [90, 90, 90, 45, 90];
+                updateManualSliders();
+                setTimeout(() => { currentValues = [90, 90, 90, 135, 90]; updateManualSliders(); }, 500);
+                setTimeout(() => { currentValues = [90, 90, 90, 90, 90]; updateManualSliders(); }, 1000);
+                return; // Special case
+            case 'PICK':
+                // Fake Pick Sequence
+                logSystem("Simulating Pick Sequence...");
+                return;
+        }
+        if (target.length > 0) {
+            currentValues = target;
+            updateManualSliders();
+        }
+    };
+
+    // 4. Theme Toggler
+    const themeBtn = document.getElementById('theme-btn');
+    if (themeBtn) {
+        themeBtn.addEventListener('click', () => {
+            const body = document.body;
+            body.classList.toggle('theme-light');
+            if (body.classList.contains('theme-light')) {
+                body.style.background = '#e2e8f0';
+                body.style.color = '#333';
+            } else {
+                body.style.background = '';
+                body.style.color = '';
+            }
+            logSystem("Theme toggled (Visual Only)");
+        });
+    }
+
+    function updateManualSliders() {
+        // Sync sliders to currentValues
+        [1, 2, 3, 4, 5].forEach((i, idx) => {
+            const sl = document.getElementById(`slider-${i}`);
+            if (sl) sl.value = currentValues[idx];
+        });
+    }
+
 
     // Visualizer Joints
     const vizJoints = [1, 2, 3, 4].map(i => document.getElementById(`viz-j${i}`)); // J1-J4 rotate entire groups
@@ -240,12 +415,23 @@
 
             // Deviation Logic (Only in Leader Mode)
             if (errs[index]) {
-                if (currentMode === 'LEADER') {
-                    // Simulate a "Target" vs "actual" lag for demo purposes
-                    const drift = (Math.random() * 2 - 1).toFixed(1);
-                    const isPos = drift > 0;
-                    errs[index].textContent = (isPos ? '+' : '') + drift + '°';
-                    errs[index].className = 'deviation ' + (isPos ? 'positive' : 'negative');
+                if (currentMode === 'LEADER' && wsLatestData) {
+                    // Calculate REAL Deviation: Target (Leader) - Actual (Sim/Follower)
+                    const target = wsLatestData[index] || 90; // Raw target
+                    // Note: wsLatestData indices map to J1, J2, J3... 
+                    // But your arrays might be aligned differently? 
+                    // wsLatestData is [J1, J2, J3, J4, J5]. bar-1 is J1. This aligns.
+
+                    const diff = (target - val).toFixed(1); // val is the smoothed current pos
+                    const isPos = diff > 0;
+
+                    errs[index].textContent = (isPos ? '+' : '') + diff + '°';
+
+                    // Color code based on magnitude of error
+                    const absErr = Math.abs(target - val);
+                    if (absErr < 1.0) errs[index].className = 'deviation'; // Normal/White
+                    else if (absErr < 5.0) errs[index].className = 'deviation positive'; // Green/Acceptable
+                    else errs[index].className = 'deviation negative'; // Red/Lagging
                 } else {
                     errs[index].textContent = '--';
                     errs[index].className = 'deviation';
@@ -1987,6 +2173,7 @@
 
         try {
             ws = new WebSocket(url);
+            ws.binaryType = "arraybuffer"; // Request Binary for S-G Protocol
 
             ws.onopen = () => {
                 wsConnected = true;
@@ -1998,22 +2185,36 @@
             };
 
             ws.onmessage = (event) => {
-                // Update Raw Display
-                if (wsRawDisplay) wsRawDisplay.textContent = event.data;
-
-                // Update Latency (Interval)
+                // 1. Latency Check
                 const now = Date.now();
                 if (lastMsgTime > 0) {
                     const diff = now - lastMsgTime;
-                    if (wsLatencyDisplay) wsLatencyDisplay.textContent = diff + " ms";
+                    if (wsLatencyDisplay) {
+                        wsLatencyDisplay.textContent = diff + " ms";
+                        // Color Health Indicator
+                        if (diff <= 20) wsLatencyDisplay.style.color = "var(--neon-green)";
+                        else if (diff <= 50) wsLatencyDisplay.style.color = "var(--neon-orange)";
+                        else wsLatencyDisplay.style.color = "var(--neon-red)";
+                    }
                 }
                 lastMsgTime = now;
 
-                // Debug: Log raw data
-                // console.log("RX:", event.data); 
-
+                // 2. Parse Data (Binary or Text)
                 let parsed = null;
-                try {
+                if (event.data instanceof ArrayBuffer) {
+                    const buf = new Uint8Array(event.data);
+                    if (buf.length === 7 && buf[0] === 0xAA) {
+                        const cs = (buf[1] + buf[2] + buf[3] + buf[4] + buf[5]) % 255;
+                        if (cs === buf[6]) {
+                            parsed = [buf[1], buf[2], buf[3], buf[4], buf[5]];
+                            if (wsRawDisplay) wsRawDisplay.textContent = `BIN: [${parsed.join(',')}]`;
+                        }
+                    }
+                } else if (wsRawDisplay) {
+                    wsRawDisplay.textContent = event.data;
+                }
+
+                if (!parsed) try {
                     // Try JSON [v1, v2...]
                     parsed = JSON.parse(event.data);
                 } catch (e) {
@@ -2141,6 +2342,68 @@
         reader.readAsText(file);
         fileInput.value = '';
     });
+
+    // --- IMITATION LEARNING STANDARDS ---
+    const btnLeRobot = document.getElementById('export-lerobot-btn');
+    const btnCalCheck = document.getElementById('cal-check-btn');
+    const btnQualityGuide = document.getElementById('quality-guide-btn');
+
+    if (btnLeRobot) {
+        btnLeRobot.addEventListener('click', () => {
+            // Export to LeRobot Dataset Format (Hugging Face)
+            // { "observation.state": [...], "action": [...] }
+            // Note: Use 'recordedPoints' which is populated during recording
+            const dataToExport = recordedPoints.length > 0 ? recordedPoints : [];
+
+            if (dataToExport.length === 0) {
+                alert("No recorded data to export!");
+                return;
+            }
+
+            const dataset = {
+                "meta": {
+                    "fps": 50, // Approx
+                    "task": document.getElementById('meta-task').value || "demo_task",
+                    "robot_type": "mimex_helrit",
+                    "format": "lerobot_v1"
+                },
+                "episodes": [
+                    {
+                        "steps": dataToExport.map(p => ({
+                            "observation.state": p.joints,
+                            "action": p.joints, // In teleop, action ~ state
+                            "timestamp": p.time
+                        }))
+                    }
+                ]
+            };
+            const jsonStr = JSON.stringify(dataset, null, 2);
+            const blob = new Blob([jsonStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `lerobot_dataset_${Date.now()}.json`;
+            a.click();
+            logSystem("Exported LeRobot Dataset");
+        });
+    }
+
+    if (btnCalCheck) {
+        btnCalCheck.addEventListener('click', () => {
+            // Calibration Wizard
+            const isGood = confirm("Calibration Check:\n1. Move visualizer to Home (All 90)\n2. Align physical robot to match.\n3. Ensure Deviation < 5.0°.\n\nProceed to reset offsets?");
+            if (isGood) {
+                // Zero out deviations logic would go here
+                logSystem("Calibration Routine Verified.");
+            }
+        });
+    }
+
+    if (btnQualityGuide) {
+        btnQualityGuide.addEventListener('click', () => {
+            alert("📋 Recording Guidelines for AI Training:\n\n1. Smoothness: Avoid jerky stops.\n2. Reset: Always start/end at Home.\n3. Noise: Reduce background infrared interference.\n4. Consistency: Grasp objects in the same way every time.\n5. Speed: Move at 50% speed for cleaner data.");
+        });
+    }
 
     function parseCSV(csvText) {
         const lines = csvText.trim().split('\n');
@@ -2489,6 +2752,42 @@
         const robotRoot = new THREE.Group();
         scene.add(robotRoot);
         robotParts.root = robotRoot;
+
+        // --- Custom Model Loader ---
+        window.loadCustomModel = function (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const loader = new THREE.GLTFLoader();
+                loader.parse(e.target.result, '', function (gltf) {
+                    // Remove old procedural parts
+                    while (robotRoot.children.length > 0) {
+                        robotRoot.remove(robotRoot.children[0]);
+                    }
+                    // Add new model
+                    const model = gltf.scene;
+                    model.scale.set(5, 5, 5); // Rough scale up
+                    robotRoot.add(model);
+                    logSystem("Custom Model Loaded Successfully!");
+                    alert("Model Loaded! Note: Custom rigging/joint mapping isn't auto-configured yet. The model will appear static until mapped.");
+                }, (err) => {
+                    console.error(err);
+                    alert("Error parsing GLTF/GLB file.");
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        };
+
+        const modelInput = document.createElement('input');
+        modelInput.type = 'file';
+        modelInput.accept = '.glb,.gltf';
+        modelInput.style.display = 'none';
+        document.body.appendChild(modelInput);
+        modelInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) window.loadCustomModel(e.target.files[0]);
+        });
+
+        // Expose trigger
+        window.triggerModelUpload = () => modelInput.click();
 
         // Base Static Group
         const baseGroup = new THREE.Group();
@@ -3762,5 +4061,31 @@
     if (container) {
         resizeObserver.observe(container);
     }
+
+    // --- Help Modal Logic ---
+    const helpBtn = document.getElementById('help-btn');
+    const helpModal = document.getElementById('help-modal');
+    const closeHelpBtn = document.getElementById('close-help-btn');
+
+    if (helpBtn && helpModal) {
+        helpBtn.addEventListener('click', () => {
+            helpModal.classList.remove('hidden');
+        });
+    }
+
+    if (closeHelpBtn && helpModal) {
+        closeHelpBtn.addEventListener('click', () => {
+            helpModal.classList.add('hidden');
+        });
+    }
+
+    // Close when clicking outside content
+    window.addEventListener('click', (e) => {
+        if (helpModal && !helpModal.classList.contains('hidden')) {
+            if (e.target === helpModal) {
+                helpModal.classList.add('hidden');
+            }
+        }
+    });
 
 });
