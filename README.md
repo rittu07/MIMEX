@@ -94,6 +94,11 @@ To run this as a standalone native application (Windows/Linux/Mac):
     ```
     *This will generate a `.exe` or `.dmg` file in the `dist` folder.*
 
+---
+
+
+
+---
 
 ## 🎮 Controls & Shortcuts
 Ensure **"Web Control"** mode is active for keyboard inputs.
@@ -127,4 +132,3 @@ Ensure **"Web Control"** mode is active for keyboard inputs.
 *   **"Unable to handle compilation..."**: Ensure `.ino` files are in their own folders (Fixed in v2.5).
 *   **WebSocket Disconnected**: Check if ESP32 and Laptop are on the same WiFi network. Use `ping <ESP_IP>` to verify.
 *   **Jerky Motion**: Adjust PID values in `script.js` (`kp` variable) or reduce `updateInterval`.
-
