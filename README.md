@@ -23,17 +23,23 @@ Now updated with a **Professional Laptop Software UI** and **Secure Login System
     *   **PID Stabilization:** Smooths jittery human inputs.
 *   **🎛️ Manual Web Control:** Direct control via on-screen sliders or keyboard shortcuts.
 
-### 2. 🧠 VLA Intelligence & Autonomy
+### 2. 🦾 Universal Robot Description Format (URDF) Support
+*   **Cyberpunk Visualization:** Provides a high-fidelity, cyberpunk-themed 3D visualization of the robotic arm using standard URDF files.
+*   **Real-Time Joint Mapping:** Seamlessly maps physical robot joint angles to the 3D digital twin.
+*   **Custom Mesh Loading:** Supports `.stl` meshes from ROS `robotic_description` packages.
+*   **Interactive Toggle:** Switch instantly between the procedural demo robot and the accurate URDF model.
+
+### 3. 🧠 VLA Intelligence & Autonomy
 *   **Neural Policy Integration:** Toggle between "Classical" and "Learned Policy" modes.
 *   **Data Collection:** Record demonstration trajectories to train Behavior Cloning (BC) models.
 *   **Export Formats:** Supports CSV, JSON, and LeRobot dataset standards for AI training.
 
-### 3. 🎥 Advanced Visualization
+### 4. 🎥 Advanced Visualization
 *   **3D Live Preview:** Interactive Three.js scene with realistic physics, lighting/shadows, and environment toggles (Factory, Table, Obstacles).
 *   **Kinetic Visualizer:** SVG-based schematic providing clear joint-angle feedback.
 *   **Real-Time Telemetry:** Graphs for joint angles, TCP (Tool Center Point) coordinates, and velocity.
 
-### 4. 🎬 Sequence Recorder & Playback
+### 5. 🎬 Sequence Recorder & Playback
 *   **Waypoint Editor:** Create complex motion sequences.
 *   **Playback Types:**
     *   **Single Run:** Execute once.

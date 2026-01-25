@@ -13,7 +13,9 @@ function createWindow() {
         backgroundColor: '#0f172a', // Matches our new slate theme
         webPreferences: {
             nodeIntegration: true,
-            contextIsolation: false // Simplified for local prototype
+            contextIsolation: false, // Simplified for local prototype
+            webSecurity: false, // Allow loading local files (CORS/File protocol)
+            allowRunningInsecureContent: true
         },
         frame: true, // Standard OS window frame
         autoHideMenuBar: true // Modern look, hide default ugly menu

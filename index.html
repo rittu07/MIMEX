@@ -781,7 +781,18 @@
         <div class="card full-width" style="margin-top: 20px; height: 600px; position: relative;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <h2 class="panel-title" style="margin: 0; border: none;">3D Live Preview</h2>
-                <div style="display: flex; gap: 10px;">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <!-- URDF Controls -->
+                    <div
+                        style="display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
+                        <span style="font-size: 0.8rem; color: rgba(255,255,255,0.7);">URDF:</span>
+                        <label class="switch" style="margin-bottom: 0; transform: scale(0.6); margin-right: 5px;">
+                            <input type="checkbox" id="toggle-model-source" checked>
+                            <span class="slider round"></span>
+                        </label>
+                        <span id="urdf-status-txt" style="font-size: 0.7rem; color: var(--neon-green);">LOADING</span>
+                    </div>
+
                     <button onclick="triggerModelUpload()" class="btn-action compact-btn"
                         style="padding: 2px 8px; font-size: 0.8rem; border-color: var(--neon-green); color: var(--neon-green);"
                         title="Upload Custom .glb/.gltf Model">📂 Upload Model</button>
@@ -871,6 +882,8 @@
                         style="color: var(--neon-orange); margin-top: 0; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 5px;">
                         Scene Options</h4>
                     <div style="display: flex; flex-direction: column; gap: 8px;">
+
+
                         <label
                             style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: white; font-size: 0.9rem;">
                             <input type="checkbox" id="toggle-floor" checked> Realistic Floor
@@ -1021,7 +1034,66 @@
 
 
 
-        <!-- Trajectory Timeline Section -->
+        <!-- Kinematics Analysis Panel -->
+        <div class="card full-width" style="margin-top: 20px;">
+            <h2 class="panel-title" style="color: var(--neon-blue); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                Kinematics Analysis</h2>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <!-- Left: Link Details (DH Calculation) -->
+                <div>
+                    <h3 style="font-size: 1rem; color: rgba(255,255,255,0.8);">Calculated DH Parameters</h3>
+                    <div style="background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px; margin-top: 10px;">
+                        <table
+                            style="width: 100%; border-collapse: collapse; color: rgba(255,255,255,0.8); font-size: 0.9rem;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--neon-blue);">
+                                    <th style="padding: 5px; text-align: center;">Link</th>
+                                    <th style="padding: 5px; text-align: center;">Val(θ)</th>
+                                    <th style="padding: 5px; text-align: center;">d (m)</th>
+                                    <th style="padding: 5px; text-align: center;">a (m)</th>
+                                    <th style="padding: 5px; text-align: center;">α (rad)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dh-table-body">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Transformation Matrix Display -->
+                    <div style="margin-top: 15px;">
+                        <h3 style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">Transformation Matrix (T04)</h3>
+                        <div id="matrix-display"
+                            style="font-family: monospace; font-size: 0.8rem; color: var(--neon-green); background: #000; padding: 10px; border-radius: 4px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; text-align: center;">
+                            <!-- Matrix cells -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: IK Solver -->
+                <div>
+                    <h3 style="font-size: 1rem; color: rgba(255,255,255,0.8);">Inverse Kinematics Solver</h3>
+                    <div style="background: rgba(0,0,0,0.5); padding: 15px; border-radius: 5px; margin-top: 10px;">
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
+                            <label>Target X:</label>
+                            <input type="number" id="ik-target-x" class="compact-input" step="0.01" value="0.2">
+                            <label>Y:</label>
+                            <input type="number" id="ik-target-y" class="compact-input" step="0.01" value="0.2">
+                            <label>Z:</label>
+                            <input type="number" id="ik-target-z" class="compact-input" step="0.01" value="0.2">
+                        </div>
+                        <button id="solve-ik-btn" class="btn-action compact-btn"
+                            style="width: 100%; margin-bottom: 10px;">SOLVE IK & MOVE</button>
+
+                        <div id="ik-result" style="font-family: monospace; color: var(--neon-blue); font-size: 0.9rem;">
+                            Result: Waiting...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card full-width" style="margin-top: 20px; height: 350px;">
             <div
                 style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 10px;">
@@ -1076,6 +1148,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/urdf-loader@0.12.1/umd/URDFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 </body>

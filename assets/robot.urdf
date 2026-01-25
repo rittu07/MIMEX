@@ -1,0 +1,227 @@
+<?xml version="1.0" ?>
+<robot name="robotic">
+
+  <material name="silver">
+    <color rgba="0.700 0.700 0.700 1.000"/>
+  </material>
+
+  <link name="base_link">
+    <inertial>
+      <origin xyz="-0.0006197580582812044 -0.033206671784566606 0.010865637221635136" rpy="0 0 0"/>
+      <mass value="0.43302193292479546"/>
+      <inertia ixx="0.001313" iyy="0.001432" izz="0.000805" ixy="6e-06" iyz="-0.000148" ixz="2.1e-05"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <mesh filename="meshes/base_link.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <mesh filename="meshes/base_link.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="SHOULDER_1">
+    <inertial>
+      <origin xyz="-2.8680225580023265e-05 0.062031226314745724 0.07526534523296123" rpy="0 0 0"/>
+      <mass value="1.5905060599186267"/>
+      <inertia ixx="0.00487" iyy="0.004113" izz="0.001823" ixy="-2e-06" iyz="0.000179" ixz="-0.0"/>
+    </inertial>
+    <visual>
+      <origin xyz="-0.0 -0.000487 -0.0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/SHOULDER_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.0 -0.000487 -0.0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/SHOULDER_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="LOWER_ARM_1">
+    <inertial>
+      <origin xyz="0.00022188412497526803 0.044088835954916084 -0.02046970272003481" rpy="0 0 0"/>
+      <mass value="2.24700987919169"/>
+      <inertia ixx="0.011497" iyy="0.003238" izz="0.010342" ixy="-5.4e-05" iyz="-0.002861" ixz="-2.8e-05"/>
+    </inertial>
+    <visual>
+      <origin xyz="-0.0 -0.064574 -0.03115" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/LOWER_ARM_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.0 -0.064574 -0.03115" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/LOWER_ARM_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="UPPER_ARM_1">
+    <inertial>
+      <origin xyz="-4.616653372606889e-05 0.0639979803152878 0.005626819880352827" rpy="0 0 0"/>
+      <mass value="0.15526470472872758"/>
+      <inertia ixx="0.000483" iyy="0.0002" izz="0.000299" ixy="0.0" iyz="0.000173" ixz="-0.0"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.0 -0.214478 0.0276" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/UPPER_ARM_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0 -0.214478 0.0276" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/UPPER_ARM_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="WRIST_1">
+    <inertial>
+      <origin xyz="-6.006126105094087e-06 0.022392627588266822 -0.0001885326507429853" rpy="0 0 0"/>
+      <mass value="0.062244194694843255"/>
+      <inertia ixx="2.4e-05" iyy="2.1e-05" izz="1.8e-05" ixy="-0.0" iyz="-0.0" ixz="0.0"/>
+    </inertial>
+    <visual>
+      <origin xyz="-0.0 -0.407987 -0.0001" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/WRIST_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.0 -0.407987 -0.0001" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/WRIST_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="finger_1_1">
+    <inertial>
+      <origin xyz="-0.0007126631883796379 0.016327909388517248 0.05456077201686822" rpy="0 0 0"/>
+      <mass value="0.0544277408008124"/>
+      <inertia ixx="1.4e-05" iyy="8e-06" izz="1.4e-05" ixy="3e-06" iyz="-3e-06" ixz="1e-06"/>
+    </inertial>
+    <visual>
+      <origin xyz="-0.006 -0.447874 0.0298" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/finger_1_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.006 -0.447874 0.0298" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/finger_1_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="finger_1_2">
+    <inertial>
+      <origin xyz="0.0007126631883832904 0.016327909388515915 0.0002391557905749818" rpy="0 0 0"/>
+      <mass value="0.0544277408008124"/>
+      <inertia ixx="1.4e-05" iyy="8e-06" izz="1.4e-05" ixy="-3e-06" iyz="3e-06" ixz="1e-06"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.006 -0.447874 0.024136" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/finger_1_2.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0.006 -0.447874 0.024136" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/finger_1_2.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="WRIST_ARM_v1_1">
+    <inertial>
+      <origin xyz="0.00013557693321748665 0.02430753708099259 -0.030810701686775542" rpy="0 0 0"/>
+      <mass value="0.4651410516079968"/>
+      <inertia ixx="0.000359" iyy="0.000152" izz="0.000241" ixy="-2e-06" iyz="2.5e-05" ixz="0.0"/>
+    </inertial>
+    <visual>
+      <origin xyz="1.1e-05 -0.328187 -0.02585" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/WRIST_ARM_v1_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="1.1e-05 -0.328187 -0.02585" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/WRIST_ARM_v1_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="base_joint" type="continuous">
+    <origin xyz="0.0 0.000487 0.0" rpy="1.5708 0 0"/>
+    <parent link="base_link"/>
+    <child link="SHOULDER_1"/>
+    <axis xyz="0.0 -1.0 0.0"/>
+  </joint>
+
+  <joint name="shoulder_joint" type="continuous">
+    <origin xyz="0.0 0.064087 0.03115" rpy="0 0 0"/>
+    <parent link="SHOULDER_1"/>
+    <child link="LOWER_ARM_1"/>
+    <axis xyz="0.0 -0.0 -1.0"/>
+  </joint>
+
+  <joint name="upper_lower_arm_joint" type="continuous">
+    <origin xyz="-0.0 0.149904 -0.05875" rpy="0 0 0"/>
+    <parent link="LOWER_ARM_1"/>
+    <child link="UPPER_ARM_1"/>
+    <axis xyz="-0.0 0.0 1.0"/>
+  </joint>
+
+  <joint name="wrist_joint" type="continuous">
+    <origin xyz="1.1e-05 0.0798 -0.02575" rpy="0 0 0"/>
+    <parent link="WRIST_ARM_v1_1"/>
+    <child link="WRIST_1"/>
+    <axis xyz="-0.0 -1.0 -0.0"/>
+  </joint>
+
+  <joint name="Slider 7" type="prismatic">
+    <origin xyz="0.006 0.039887 -0.0299" rpy="0 0 0"/>
+    <parent link="WRIST_1"/>
+    <child link="finger_1_1"/>
+    <axis xyz="-0.0 -0.0 -1.0"/>
+    <limit upper="0.0" lower="0.0" effort="100" velocity="100"/>
+  </joint>
+
+  <joint name="Slider 8" type="prismatic">
+    <origin xyz="-0.006 0.039887 -0.024236" rpy="0 0 0"/>
+    <parent link="WRIST_1"/>
+    <child link="finger_1_2"/>
+    <axis xyz="-0.0 -0.0 -1.0"/>
+    <limit upper="0.0" lower="0.0" effort="100" velocity="100"/>
+  </joint>
+
+  <joint name="upper_wrist_joint" type="continuous">
+    <origin xyz="-1.1e-05 0.113709 0.05345" rpy="0 0 0"/>
+    <parent link="UPPER_ARM_1"/>
+    <child link="WRIST_ARM_v1_1"/>
+    <axis xyz="-0.0 0.0 -1.0"/>
+  </joint>
+
+</robot>

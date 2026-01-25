@@ -476,6 +476,9 @@
             clawRight.setAttribute('transform', `rotate(${openAngle})`);
         }
 
+        // --- Update URDF Model ---
+        if (typeof updateURDF === 'function') updateURDF(values);
+
         // --- Calculate Forward Kinematics (XYZ) ---
         calculateFK(values);
     }
@@ -1694,28 +1697,136 @@
 
     // --- Forward Kinematics (FK) Calculation ---
     // Simplified planer model for "Kinetic Visualizer" logic
+    // --- Forward Kinematics (DH Parameters) ---
     function calculateFK(joints) {
-        const L1 = 0.4;
-        const L2 = 0.4;
-        const L3 = 0.35;
-        const L4 = 0.1;
+        // Robot Links (in Meters)
+        const L1 = 0.4;  // Base Height
+        const L2 = 0.4;  // Shoulder to Elbow
+        const L3 = 0.35; // Elbow to Wrist
+        const L4 = 0.1;  // Wrist to TCP
 
-        const t1 = (joints[0] - 90) * (Math.PI / 180);
-        const t2 = (joints[1] - 90) * (Math.PI / 180);
-        const t3 = (joints[2] - 90) * (Math.PI / 180);
-        const t4 = (joints[3] - 90) * (Math.PI / 180);
+        // Convert Degrees to Radians (Home is 90 deg -> 0 rad)
+        const q1 = (joints[0] - 90) * (Math.PI / 180);
+        const q2 = (joints[1] - 90) * (Math.PI / 180);
+        const q3 = (joints[2] - 90) * (Math.PI / 180);
+        const q4 = (joints[3] - 90) * (Math.PI / 180);
 
-        const y_coord = L1 + L2 * Math.cos(t2) + L3 * Math.cos(t2 + t3) + L4 * Math.cos(t2 + t3 + t4);
-        const r_coord = L2 * Math.sin(t2) + L3 * Math.sin(t2 + t3) + L4 * Math.sin(t2 + t3 + t4);
+        // DH Table (theta, d, a, alpha)
+        const dhParams = [
+            { theta: q1, d: L1, a: 0, alpha: Math.PI / 2 },
+            { theta: q2, d: 0, a: L2, alpha: 0 },
+            { theta: q3, d: 0, a: L3, alpha: 0 },
+            { theta: q4, d: 0, a: L4, alpha: 0 }
+        ];
 
-        const x_coord = r_coord * Math.sin(t1);
-        const z_coord = r_coord * Math.cos(t1);
+        let T = new THREE.Matrix4(); // Identity
 
-        if (posX) posX.textContent = x_coord.toFixed(2);
-        if (posY) posY.textContent = y_coord.toFixed(2);
-        if (posZ) posZ.textContent = z_coord.toFixed(2);
+        dhParams.forEach(p => {
+            const m = new THREE.Matrix4();
+            const c = Math.cos(p.theta);
+            const s = Math.sin(p.theta);
+            const ca = Math.cos(p.alpha);
+            const sa = Math.sin(p.alpha);
 
-        return { x: x_coord, y: y_coord, z: z_coord };
+            // Standard DH Matrix
+            m.set(
+                c, -s * ca, s * sa, p.a * c,
+                s, c * ca, -c * sa, p.a * s,
+                0, sa, ca, p.d,
+                0, 0, 0, 1
+            );
+
+            T.multiply(m);
+        });
+
+        // Populate DH Table UI
+        const dhTableBody = document.getElementById('dh-table-body');
+        if (dhTableBody) {
+            dhTableBody.innerHTML = "";
+            dhParams.forEach((p, i) => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
+                tr.innerHTML = `
+                    <td style="padding:5px; text-align:center;">${i + 1}</td>
+                    <td style="padding:5px; text-align:center;">${p.theta.toFixed(2)}</td>
+                    <td style="padding:5px; text-align:center;">${p.d}</td>
+                    <td style="padding:5px; text-align:center;">${p.a}</td>
+                    <td style="padding:5px; text-align:center;">${p.alpha.toFixed(2)}</td>
+                `;
+                dhTableBody.appendChild(tr);
+            });
+        }
+
+        // Populate Matrix Display
+        const matrixDisplay = document.getElementById('matrix-display');
+        if (matrixDisplay) {
+            const el = T.elements; // Column-major!
+            // Three.js store column-major: 0,1,2,3 is col 1.
+            // visual text should be row-major.
+            // r1: 0, 4, 8, 12
+            // r2: 1, 5, 9, 13
+            // r3: 2, 6, 10, 14
+            // r4: 3, 7, 11, 15
+            const orderedIndices = [0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15];
+
+            matrixDisplay.innerHTML = "";
+            orderedIndices.forEach((idx, i) => {
+                const div = document.createElement('div');
+                div.textContent = el[idx].toFixed(2);
+                // Highlight Position (last column)
+                if ((i + 1) % 4 === 0) div.style.color = "var(--neon-blue)";
+                matrixDisplay.appendChild(div);
+            });
+        }
+
+        // Extract Position
+        const pos = new THREE.Vector3();
+        pos.setFromMatrixPosition(T);
+
+        // Update UI
+        if (posX) posX.textContent = pos.x.toFixed(2);
+        if (posY) posY.textContent = pos.y.toFixed(2);
+        if (posZ) posZ.textContent = pos.z.toFixed(2);
+
+        return { x: pos.x, y: pos.y, z: pos.z };
+    }
+
+    // --- IK Solver Interaction ---
+    const solveIkBtn = document.getElementById('solve-ik-btn');
+    if (solveIkBtn) {
+        solveIkBtn.addEventListener('click', () => {
+            const tx = parseFloat(document.getElementById('ik-target-x').value) || 0;
+            const ty = parseFloat(document.getElementById('ik-target-y').value) || 0;
+            const tz = parseFloat(document.getElementById('ik-target-z').value) || 0;
+
+            const resultDiv = document.getElementById('ik-result');
+            resultDiv.textContent = "Calculating...";
+
+            // 100ms delay to show status
+            setTimeout(() => {
+                // Use existing solveIK (Geometric)
+                // solveIK returns [j1, j2, j3, j4, j5] or null
+                const sol = solveIK(tx, ty, tz, currentValues);
+
+                if (sol) {
+                    resultDiv.textContent = `Sol: [${sol.map(v => Math.round(v)).join(',')}]`;
+                    resultDiv.style.color = "var(--neon-green)";
+
+                    // Move Robot
+                    // Safety check?
+                    if (checkSafety(sol)) {
+                        currentValues = sol;
+                        updateDisplay(currentValues);
+                    } else {
+                        resultDiv.textContent = "Solution Unsafe (Limits)";
+                        resultDiv.style.color = "var(--neon-red)";
+                    }
+                } else {
+                    resultDiv.textContent = "Target Unreachable";
+                    resultDiv.style.color = "var(--neon-red)";
+                }
+            }, 100);
+        });
     }
 
     // --- Controls ---
@@ -2593,7 +2704,7 @@
 
     // --- 3D Visualization Logic (Three.js) ---
     // 3D Globals
-    let camera, scene, renderer, controls;
+    let camera, scene, renderer, controls, robot;
     let robotParts = {};
     let targetBlock;
     let heldObject = null;
@@ -2615,9 +2726,9 @@
         // Ensure non-zero dimensions
         const width = container.clientWidth || 400;
         const height = container.clientHeight || 300;
-        camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-        camera.position.set(15, 12, 15); // Closer and more centered
-        camera.lookAt(0, 4, 0); // Focus on robot mid-section (approx J2/J3 height)
+        camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 5000);
+        camera.position.set(15, 12, 15);
+        camera.lookAt(0, 4, 0);
 
         // Renderer
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -2644,6 +2755,9 @@
         pointLight.position.set(-5, 10, -5);
         scene.add(pointLight);
 
+        // Load URDF Support
+        loadURDF();
+
         // Env Group
         const envGroup = new THREE.Group();
         scene.add(envGroup);
@@ -2662,8 +2776,8 @@
         controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
-        controls.minDistance = 2; // Allow closer zoom
-        controls.maxDistance = 150; // Allow further zoom out
+        controls.minDistance = 0.1; // Allow microscopic zoom
+        controls.maxDistance = 2000; // Allow extreme zoom out
         controls.maxPolarAngle = Math.PI / 2; // Don't go below ground
         controls.target.set(0, 4, 0); // Focus on robot mid-section
 
@@ -2752,42 +2866,6 @@
         const robotRoot = new THREE.Group();
         scene.add(robotRoot);
         robotParts.root = robotRoot;
-
-        // --- Custom Model Loader ---
-        window.loadCustomModel = function (file) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const loader = new THREE.GLTFLoader();
-                loader.parse(e.target.result, '', function (gltf) {
-                    // Remove old procedural parts
-                    while (robotRoot.children.length > 0) {
-                        robotRoot.remove(robotRoot.children[0]);
-                    }
-                    // Add new model
-                    const model = gltf.scene;
-                    model.scale.set(5, 5, 5); // Rough scale up
-                    robotRoot.add(model);
-                    logSystem("Custom Model Loaded Successfully!");
-                    alert("Model Loaded! Note: Custom rigging/joint mapping isn't auto-configured yet. The model will appear static until mapped.");
-                }, (err) => {
-                    console.error(err);
-                    alert("Error parsing GLTF/GLB file.");
-                });
-            };
-            reader.readAsArrayBuffer(file);
-        };
-
-        const modelInput = document.createElement('input');
-        modelInput.type = 'file';
-        modelInput.accept = '.glb,.gltf';
-        modelInput.style.display = 'none';
-        document.body.appendChild(modelInput);
-        modelInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) window.loadCustomModel(e.target.files[0]);
-        });
-
-        // Expose trigger
-        window.triggerModelUpload = () => modelInput.click();
 
         // Base Static Group
         const baseGroup = new THREE.Group();
@@ -3724,8 +3802,10 @@
         }
         // Force matrix update for entire chain?
         // Scene update handles it usually, but we need immediate.
-        // Traverse down from J1?
-        robotParts.j1.updateMatrixWorld(true);
+        if (robotParts && robotParts.root) {
+            robotParts.root.visible = false;
+            console.log("Procedural robot hidden.");
+        }
     }
 
     // Start animation loop
@@ -3743,6 +3823,424 @@
             camera.aspect = width / height;
             camera.updateProjectionMatrix();
         }
+    }
+
+    // --- URDF Functions ---
+    // Note: We are using "robotic_description/meshes" because that is the folder structure relative to index.html
+    const robotUrdfContent = `<?xml version="1.0" ?>
+<robot name="robotic">
+  <material name="silver">
+    <color rgba="0.700 0.700 0.700 1.000"/>
+  </material>
+  <link name="base_link">
+    <inertial>
+      <origin xyz="-0.0006197580582812044 -0.033206671784566606 0.010865637221635136" rpy="0 0 0"/>
+      <mass value="0.43302193292479546"/>
+      <inertia ixx="0.001313" iyy="0.001432" izz="0.000805" ixy="6e-06" iyz="-0.000148" ixz="2.1e-05"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <mesh filename="robotic_description/meshes/base_link.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <mesh filename="robotic_description/meshes/base_link.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="SHOULDER_1">
+    <inertial>
+      <origin xyz="-2.8680225580023265e-05 0.062031226314745724 0.07526534523296123" rpy="0 0 0"/>
+      <mass value="1.5905060599186267"/>
+      <inertia ixx="0.00487" iyy="0.004113" izz="0.001823" ixy="-2e-06" iyz="0.000179" ixz="-0.0"/>
+    </inertial>
+    <visual>
+      <origin xyz="-0.0 -0.000487 -0.0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="robotic_description/meshes/SHOULDER_1.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.0 -0.000487 -0.0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="robotic_description/meshes/SHOULDER_1.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="LOWER_ARM_1">
+    <inertial>
+      <origin xyz="0.00022188412497526803 0.044088835954916084 -0.02046970272003481" rpy="0 0 0"/>
+      <mass value="2.24700987919169"/>
+      <inertia ixx="0.011497" iyy="0.003238" izz="0.010342" ixy="-5.4e-05" iyz="-0.002861" ixz="-2.8e-05"/>
+    </inertial>
+    <visual>
+      <origin xyz="-0.0 -0.064574 -0.03115" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="robotic_description/meshes/LOWER_ARM_1.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.0 -0.064574 -0.03115" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="robotic_description/meshes/LOWER_ARM_1.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="UPPER_ARM_1">
+    <inertial>
+      <origin xyz="-4.616653372606889e-05 0.0639979803152878 0.005626819880352827" rpy="0 0 0"/>
+      <mass value="0.15526470472872758"/>
+      <inertia ixx="0.000483" iyy="0.0002" izz="0.000299" ixy="0.0" iyz="0.000173" ixz="-0.0"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.0 -0.214478 0.0276" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="robotic_description/meshes/UPPER_ARM_1.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0 -0.214478 0.0276" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="robotic_description/meshes/UPPER_ARM_1.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="WRIST_1">
+    <inertial>
+      <origin xyz="-6.006126105094087e-06 0.022392627588266822 -0.0001885326507429853" rpy="0 0 0"/>
+      <mass value="0.062244194694843255"/>
+      <inertia ixx="2.4e-05" iyy="2.1e-05" izz="1.8e-05" ixy="-0.0" iyz="-0.0" ixz="0.0"/>
+    </inertial>
+    <visual>
+      <origin xyz="-0.0 -0.407987 -0.0001" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="robotic_description/meshes/WRIST_1.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.0 -0.407987 -0.0001" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="robotic_description/meshes/WRIST_1.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="finger_1_1">
+    <inertial>
+      <origin xyz="-0.0007126631883796379 0.016327909388517248 0.05456077201686822" rpy="0 0 0"/>
+      <mass value="0.0544277408008124"/>
+      <inertia ixx="1.4e-05" iyy="8e-06" izz="1.4e-05" ixy="3e-06" iyz="-3e-06" ixz="1e-06"/>
+    </inertial>
+    <visual>
+      <origin xyz="-0.006 -0.447874 0.0298" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="robotic_description/meshes/finger_1_1.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.006 -0.447874 0.0298" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="robotic_description/meshes/finger_1_1.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="finger_1_2">
+    <inertial>
+      <origin xyz="0.0007126631883832904 0.016327909388515915 0.0002391557905749818" rpy="0 0 0"/>
+      <mass value="0.0544277408008124"/>
+      <inertia ixx="1.4e-05" iyy="8e-06" izz="1.4e-05" ixy="-3e-06" iyz="3e-06" ixz="1e-06"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.006 -0.447874 0.024136" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="robotic_description/meshes/finger_1_2.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0.006 -0.447874 0.024136" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="robotic_description/meshes/finger_1_2.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="WRIST_ARM_v1_1">
+    <inertial>
+      <origin xyz="0.00013557693321748665 0.02430753708099259 -0.030810701686775542" rpy="0 0 0"/>
+      <mass value="0.4651410516079968"/>
+      <inertia ixx="0.000359" iyy="0.000152" izz="0.000241" ixy="-2e-06" iyz="2.5e-05" ixz="0.0"/>
+    </inertial>
+    <visual>
+      <origin xyz="1.1e-05 -0.328187 -0.02585" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="robotic_description/meshes/WRIST_ARM_v1_1.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="1.1e-05 -0.328187 -0.02585" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="robotic_description/meshes/WRIST_ARM_v1_1.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="base_joint" type="continuous">
+    <origin xyz="0.0 0.000487 0.0" rpy="1.5708 0 0"/>
+    <parent link="base_link"/>
+    <child link="SHOULDER_1"/>
+    <axis xyz="0.0 -1.0 0.0"/>
+  </joint>
+  <joint name="shoulder_joint" type="continuous">
+    <origin xyz="0.0 0.064087 0.03115" rpy="0 0 0"/>
+    <parent link="SHOULDER_1"/>
+    <child link="LOWER_ARM_1"/>
+    <axis xyz="0.0 -0.0 -1.0"/>
+  </joint>
+  <joint name="upper_lower_arm_joint" type="continuous">
+    <origin xyz="-0.0 0.149904 -0.05875" rpy="0 0 0"/>
+    <parent link="LOWER_ARM_1"/>
+    <child link="UPPER_ARM_1"/>
+    <axis xyz="-0.0 0.0 -1.0"/>
+  </joint>
+  <joint name="wrist_joint" type="continuous">
+    <origin xyz="1.1e-05 0.0798 -0.02575" rpy="0 0 0"/>
+    <parent link="WRIST_ARM_v1_1"/>
+    <child link="WRIST_1"/>
+    <axis xyz="-0.0 -1.0 -0.0"/>
+  </joint>
+  <joint name="Slider 7" type="prismatic">
+    <origin xyz="0.006 0.039887 -0.0299" rpy="0 0 0"/>
+    <parent link="WRIST_1"/>
+    <child link="finger_1_1"/>
+    <axis xyz="-0.0 -0.0 -1.0"/>
+    <limit upper="0.0" lower="0.0" effort="100" velocity="100"/>
+  </joint>
+  <joint name="Slider 8" type="prismatic">
+    <origin xyz="-0.006 0.039887 -0.024236" rpy="0 0 0"/>
+    <parent link="WRIST_1"/>
+    <child link="finger_1_2"/>
+    <axis xyz="-0.0 -0.0 -1.0"/>
+    <limit upper="0.0" lower="0.0" effort="100" velocity="100"/>
+  </joint>
+  <joint name="upper_wrist_joint" type="continuous">
+    <origin xyz="-1.1e-05 0.113709 0.05345" rpy="0 0 0"/>
+    <parent link="UPPER_ARM_1"/>
+    <child link="WRIST_ARM_v1_1"/>
+    <axis xyz="-0.0 0.0 -1.0"/>
+  </joint>
+</robot>`;
+
+    function loadURDF() {
+        const statusEl = document.getElementById('urdf-status-txt');
+
+        if (typeof URDFLoader === 'undefined') {
+            console.warn("URDFLoader not found.");
+            if (statusEl) {
+                statusEl.textContent = "LIB MISSING (URDF)";
+                statusEl.style.color = "var(--neon-red)";
+            }
+            return;
+        }
+
+        if (typeof THREE.STLLoader === 'undefined') {
+            console.warn("THREE.STLLoader not found.");
+            if (statusEl) {
+                statusEl.textContent = "LIB MISSING (STL)";
+                statusEl.style.color = "var(--neon-red)";
+                // alert("Critical Error: THREE.STLLoader is missing. Check internet connection or CDN links.");
+            }
+            return;
+        }
+
+        if (statusEl) statusEl.textContent = "PARSING...";
+
+        // Use LoadingManager for detailed mesh loading status
+        const manager = new THREE.LoadingManager();
+        manager.onItemStart = (url) => console.log(`Loading: ${url}`);
+        manager.onLoad = () => {
+            console.log("All URDF assets loaded.");
+            if (statusEl) {
+                if (robot) {
+                    const jointCount = Object.keys(robot.joints).length;
+                    statusEl.textContent = `ACTIVE (${jointCount}J)`;
+                    statusEl.style.color = "var(--neon-green)";
+                }
+            }
+        };
+        manager.onError = (url) => {
+            console.error(`Failed to load asset: ${url}`);
+            if (statusEl) {
+                statusEl.textContent = "MESH ERR";
+                statusEl.title = "Failed to load: " + url;
+                // Optional: Alert only once
+                // alert("Failed to load mesh: " + url);
+            }
+        };
+
+        const loader = new URDFLoader(manager);
+        loader.packages = { 'robotic_description': './' }; // Map package name to base URL
+
+        try {
+            // Parse inline content instead of fetching file
+            // Note: URDFLoader.parse returns the robot immediately (synchronously) 
+            // BUT it starts loading meshes asynchronously via the manager.
+            robot = loader.parse(robotUrdfContent);
+
+            // Helper to visualize finding
+            scene.add(new THREE.BoxHelper(robot, 0xffff00));
+
+            scene.add(robot);
+
+            // Standard Industrial Robot Orientation
+            robot.rotation.x = -Math.PI / 2;
+            robot.position.y = 3.5; // Raised to sit on table
+
+            // Adjust Scale based on user request "scale down"
+            robot.scale.set(0.05, 0.05, 0.05);
+
+            // EXPERIMENTAL: Scale up significantly to ensure visibility if 0.001 was too small
+            // If the original STL was in Meters, 0.001 reduces it to mm.
+            // Let's try scaling it back up by 1000 (effectively removing the XML scale of 0.001).
+            // robot.scale.set(1000, 1000, 1000); 
+
+            // Shadows & Styling
+            robot.traverse(c => {
+                if (c.isMesh) {
+                    c.castShadow = true;
+                    c.receiveShadow = true;
+                    c.material.side = THREE.DoubleSide;
+
+                    // Apply Cyberpunk Theme Colors based on Link Name
+                    // Hierarchy: LinkName (Group) -> Visual (Group) -> Mesh
+                    const linkName = c.parent.parent ? c.parent.parent.name : '';
+
+                    // Create new material to override the default "silver"
+                    if (linkName.includes('base_link')) {
+                        c.material = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, metalness: 0.8, roughness: 0.2, name: 'DarkMetal' });
+                    } else if (linkName.includes('SHOULDER')) {
+                        c.material = new THREE.MeshStandardMaterial({ color: 0xff6600, metalness: 0.6, roughness: 0.3, name: 'OrangePaint' });
+                    } else if (linkName.includes('LOWER_ARM')) {
+                        c.material = new THREE.MeshStandardMaterial({ color: 0xe0e0e0, metalness: 0.5, roughness: 0.5, name: 'WhiteMetal' });
+                    } else if (linkName.includes('UPPER_ARM')) {
+                        c.material = new THREE.MeshStandardMaterial({ color: 0xff6600, metalness: 0.6, roughness: 0.3, name: 'OrangePaint' });
+                    } else if (linkName.includes('WRIST')) {
+                        c.material = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.7, roughness: 0.4, name: 'DarkGrey' });
+                    } else if (linkName.includes('finger')) {
+                        c.material = new THREE.MeshStandardMaterial({ color: 0x00f3ff, metalness: 0.2, roughness: 0.2, emissive: 0x004455, name: 'NeonGripper' });
+                    } else {
+                        c.material = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.5, roughness: 0.5 });
+                    }
+                }
+            });
+
+            console.log("URDF Structure Parsed!", robot);
+            if (statusEl) statusEl.textContent = "LOADING MESHES...";
+
+            // Center Camera on Robot - GUARDED to prevet crash
+            if (controls && robot) {
+                const box = new THREE.Box3().setFromObject(robot);
+                const center = box.getCenter(new THREE.Vector3());
+                if (controls.target) {
+                    controls.target.copy(center);
+                    controls.update();
+                }
+            }
+
+            // Initial Visibility
+            updateModelVisibility();
+
+            // Initial Pose
+            if (typeof currentValues !== 'undefined') updateURDF(currentValues);
+
+        } catch (err) {
+            console.error("URDF Parse Error:", err);
+            if (statusEl) {
+                statusEl.textContent = "PARSE ERR";
+                statusEl.style.color = "var(--neon-red)";
+                statusEl.title = err.message;
+                // alert("URDF Parse Error: " + err.message);
+            }
+        }
+    }
+
+    // New Helper for Visibility
+    function updateModelVisibility() {
+        const toggleModelSource = document.getElementById('toggle-model-source');
+        if (!toggleModelSource) return;
+
+        const useURDF = toggleModelSource.checked;
+
+        // Show/Hide URDF
+        if (robot) {
+            robot.visible = useURDF;
+            // Also hide the helper if it exists
+            scene.traverse(child => {
+                if (child.isBoxHelper && child.parent === scene && child.object === robot) child.visible = useURDF;
+            });
+        }
+
+        // Show/Hide Procedural
+        if (robotParts && robotParts.root) {
+            robotParts.root.visible = !useURDF;
+            console.log("Procedural Visibility:", !useURDF);
+        }
+    }
+
+    // Attach Listener globally if not already attached (idempotent check)
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggle = document.getElementById('toggle-model-source');
+        if (toggle) {
+            toggle.addEventListener('change', updateModelVisibility);
+        }
+    });
+    // Also try attaching now in case DOM is already ready
+    setTimeout(() => {
+        const toggle = document.getElementById('toggle-model-source');
+        if (toggle) {
+            toggle.removeEventListener('change', updateModelVisibility); // Avoid duplicates
+            toggle.addEventListener('change', updateModelVisibility);
+        }
+    }, 1000);
+
+    function updateURDF(values) {
+        if (!robot) return;
+
+        // Helper: Deg -> Rad
+        const toRad = (deg) => (deg - 90) * (Math.PI / 180);
+
+        // Map UI Sliders (0-180, home 90) to Joints
+        // URDF Names from user file:
+        // J1: base_joint
+        // J2: shoulder_joint
+        // J3: upper_lower_arm_joint
+        // J4: upper_wrist_joint
+        // J5: wrist_joint (Gripper/Wrist Roll?)
+
+        const map = {
+            'base_joint': values[0],
+            'shoulder_joint': values[1],
+            'upper_lower_arm_joint': values[2],
+            'upper_wrist_joint': values[3],
+            'wrist_joint': values[4]
+        };
+
+        for (const [name, val] of Object.entries(map)) {
+            if (robot.joints[name]) {
+                robot.setJointValue(name, toRad(val));
+            }
+        }
+
+        // Gripper (Prismatic) - Optional mapping
+        // If J5 is distinct from gripper, we might want to map a derived value to fingers
+        // But for now, direct 5-DOF mapping.
     }
 
     function animate3D() {
@@ -4030,6 +4528,19 @@
     // Toggle Listeners
     const toggleWall = document.getElementById('toggle-wall');
     const toggleShelf = document.getElementById('toggle-shelf');
+    const toggleModelSource = document.getElementById('toggle-model-source');
+
+    if (toggleModelSource) {
+        toggleModelSource.addEventListener('change', (e) => {
+            const useURDF = e.target.checked;
+            if (robot) robot.visible = useURDF;
+            if (robotParts.root) robotParts.root.visible = !useURDF;
+
+            // Re-sync poses if switching
+            if (useURDF && robot) updateURDF(currentValues);
+            if (!useURDF) updateRobotModel(currentValues);
+        });
+    }
 
     if (toggleFloor) toggleFloor.addEventListener('change', updateSceneObjects);
     if (toggleTable) toggleTable.addEventListener('change', updateSceneObjects);
@@ -4037,8 +4548,6 @@
     if (toggleShadows) toggleShadows.addEventListener('change', updateSceneObjects);
     if (toggleWall) toggleWall.addEventListener('change', updateSceneObjects);
     if (toggleShelf) toggleShelf.addEventListener('change', updateSceneObjects);
-
-    init3D();
 
     // Define resizeRenderer function
     function resizeRenderer() {
@@ -4087,5 +4596,9 @@
             }
         }
     });
+
+    // Start 3D
+    init3D();
+    animate3D();
 
 });
